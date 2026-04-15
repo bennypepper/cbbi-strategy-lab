@@ -5,8 +5,10 @@ Methodology, glossary, and full disclaimer.
 """
 
 import streamlit as st
+from core.styles import inject_css
 
 st.set_page_config(page_title="Documentation · CBBI Strategy Lab", page_icon="📖", layout="wide")
+inject_css()
 
 st.markdown("## 📖 Documentation")
 st.markdown(

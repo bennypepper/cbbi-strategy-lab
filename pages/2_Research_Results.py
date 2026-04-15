@@ -21,8 +21,10 @@ from core.charts import (
     build_sensitivity_heatmap,
     build_comparison_chart,
 )
+from core.styles import inject_css
 
 st.set_page_config(page_title="Research Results · CBBI Strategy Lab", page_icon="🔬", layout="wide")
+inject_css()
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 results = load_research_results()

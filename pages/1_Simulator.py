@@ -11,8 +11,10 @@ import numpy as np
 from core.data_loader import load_master_dataset, get_dataset_slice
 from core.engine import run_backtest_full
 from core.charts import build_equity_chart, build_cbbi_chart
+from core.styles import inject_css
 
 st.set_page_config(page_title="Simulator · CBBI Strategy Lab", page_icon="⚡", layout="wide")
+inject_css()
 
 # ── Presets ───────────────────────────────────────────────────────────────────
 PRESETS = {
