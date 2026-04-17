@@ -456,19 +456,19 @@ if "sim_result" in st.session_state:
 
         st.dataframe(
             styled,
-            width='stretch',
+            use_container_width=True,
             height=400,
             column_config={
                 "#":             st.column_config.NumberColumn("#",            width="small"),
                 "Date":          st.column_config.TextColumn("Tanggal",        width="small"),
                 "Action":        st.column_config.TextColumn("Tipe",           width="small"),
-                "BTC Price":     st.column_config.TextColumn("Harga BTC",      width="medium"),
-                "Amount (USD)":  st.column_config.TextColumn("Jumlah USD",     width="medium"),
-                "BTC Amount":    st.column_config.TextColumn("Jumlah BTC",     width="medium"),
+                "BTC Price":     st.column_config.TextColumn("Harga BTC"),
+                "Amount (USD)":  st.column_config.TextColumn("Jumlah USD"),
+                "BTC Amount":    st.column_config.TextColumn("Jumlah BTC"),
                 "CBBI Index":    st.column_config.TextColumn("Index",          width="small"),
-                "Cash After":    st.column_config.TextColumn("Cash Setelah",   width="medium"),
-                "BTC Held After":st.column_config.TextColumn("BTC Setelah",    width="medium"),
-                "Equity After":  st.column_config.TextColumn("Equity",         width="medium"),
+                "Cash After":    st.column_config.TextColumn("Cash Setelah"),
+                "BTC Held After":st.column_config.TextColumn("BTC Setelah"),
+                "Equity After":  st.column_config.TextColumn("Equity"),
             },
         )
 
