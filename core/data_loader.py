@@ -44,7 +44,13 @@ def fetch_cbbi_live() -> pd.DataFrame:
     Returns a DataFrame formatted exactly like the master_dataset.
     """
     url = "https://colintalkscrypto.com/cbbi/data/latest.json"
-    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://colintalkscrypto.com/cbbi/"
+    }
+    r = requests.get(url, headers=headers, timeout=10)
     r.raise_for_status()
     data = r.json()
     
@@ -62,6 +68,7 @@ def fetch_cbbi_live() -> pd.DataFrame:
     
     # Filter to match our standard starting point of 2012 generally or keep all
     df = df.sort_index()
+    df["btc_close"] = df["btc_open"]
     return df
 
 
