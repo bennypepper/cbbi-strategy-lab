@@ -81,9 +81,9 @@ def run_backtest_numba(
             prev = portfolio_value[i - 1]
             daily_returns[i] = (curr_val - prev) / prev if prev > 0 else 0.0
 
-        if sig < threshold_buy:
+        if sig <= threshold_buy:
             trade_amount = cash * alloc_buy_pct
-            if trade_amount > 0:
+            if trade_amount > 1.0:  # Minimum $1 guard — prevents dust buys (matches CLI)
                 fee        = trade_amount * fee_rate
                 net_usd    = trade_amount - fee
                 btc_bought = net_usd / p_exec
@@ -94,9 +94,9 @@ def run_backtest_numba(
                 cash -= trade_amount
                 trade_count += 1
 
-        elif sig > threshold_sell:
+        elif sig >= threshold_sell:
             btc_sold = btc * alloc_sell_pct
-            if btc_sold > 0:
+            if btc_sold > 0.000001:  # Minimum BTC dust guard (matches CLI)
                 gross_usd = btc_sold * p_exec
                 fee       = gross_usd * fee_rate
                 net_usd   = gross_usd - fee
@@ -222,9 +222,9 @@ def run_backtest_full(
 
         action = None
 
-        if sig < threshold_buy:
+        if sig <= threshold_buy:
             trade_amount = cash * alloc_buy_pct
-            if trade_amount > 0 and p_exec > 0:
+            if trade_amount > 1.0:  # Minimum $1 guard — prevents dust buys (matches CLI)
                 fee        = trade_amount * fee_rate
                 net_usd    = trade_amount - fee
                 btc_bought = net_usd / p_exec
@@ -233,11 +233,11 @@ def run_backtest_full(
                 avg_entry_price = total_cost / btc if btc > 0 else 0.0
                 cash -= trade_amount
                 trade_count += 1
-                action = ("BUY", trade_amount)
+                action = ("BUY", trade_amount, btc_bought)
 
-        elif sig > threshold_sell:
+        elif sig >= threshold_sell:
             btc_sold = btc * alloc_sell_pct
-            if btc_sold > 0 and p_exec > 0:
+            if btc_sold > 0.000001:  # Minimum BTC dust guard (matches CLI)
                 gross_usd = btc_sold * p_exec
                 fee       = gross_usd * fee_rate
                 net_usd   = gross_usd - fee
@@ -248,17 +248,21 @@ def run_backtest_full(
                 if net_usd > cost_sold:
                     wins += 1
                 sell_count += 1
-                action = ("SELL", gross_usd)
+                action = ("SELL", gross_usd, btc_sold)
 
         if action is not None:
             exec_date = dates[i + 1] if i + 1 < n else dates[i]
+            equity_after = cash + btc * p_exec
             trade_rows.append({
-                "Date": exec_date,
-                "Action": action[0],
-                "Trolololo Signal": round(sig, 2),
-                "Exec Price (BTC Open)": round(p_exec, 2),
-                "Amount (USD)": round(action[1], 2),
-                "Portfolio Value After": round(cash + btc * p_exec, 2),
+                "Date":           exec_date,
+                "Action":         action[0],
+                "BTC Price":      round(p_exec, 2),
+                "Amount (USD)":   round(action[1], 2),
+                "BTC Amount":     round(action[2], 6),   # exact BTC qty bought/sold
+                "CBBI Index":     round(sig, 1),
+                "Cash After":     round(cash, 2),
+                "BTC Held After": round(btc, 6),
+                "Equity After":   round(equity_after, 2),
             })
 
     # Final day
@@ -299,8 +303,10 @@ def run_backtest_full(
     }).set_index("date")
 
     # ── Buy & Hold benchmark ──────────────────────────────────────────────────
-    bh_values = (prices_close / prices_close[0]) * initial_cash
-    bh_return = (prices_close[-1] - prices_close[0]) / prices_close[0]
+    # Use open[0] entry with fee deducted — matches CLI behavior exactly
+    _bh_btc   = (initial_cash * (1.0 - fee_rate)) / prices_open[0]
+    bh_values = _bh_btc * prices_close
+    bh_return = (_bh_btc * prices_close[-1] - initial_cash) / initial_cash
     bh_daily_ret = np.diff(prices_close) / prices_close[:-1]
     bh_daily_ret = np.concatenate([[0.0], bh_daily_ret])
 
@@ -321,8 +327,11 @@ def run_backtest_full(
 
     # ── Trade log ─────────────────────────────────────────────────────────────
     trade_log = pd.DataFrame(trade_rows) if trade_rows else pd.DataFrame(
-        columns=["Date", "Action", "Trolololo Signal",
-                 "Exec Price (BTC Open)", "Amount (USD)", "Portfolio Value After"]
+        columns=[
+            "Date", "Action", "BTC Price", "Amount (USD)",
+            "BTC Amount", "CBBI Index", "Cash After",
+            "BTC Held After", "Equity After",
+        ]
     )
 
     return SimulationResult(
