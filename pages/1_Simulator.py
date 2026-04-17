@@ -141,13 +141,28 @@ with col_input:
         help="SELL signal fires when Trolololo is AT OR ABOVE this value. Higher = more selective.",
     )
 
-    st.markdown(
-        f"<div class='info-strip' style='margin: 0.3rem 0 0.8rem;'>"
-        f"Hold zone: <b>{threshold_buy} – {threshold_sell}</b> &nbsp;|&nbsp; "
-        f"Spread: <b>{threshold_sell - threshold_buy} points</b>"
-        f"</div>",
-        unsafe_allow_html=True,
-    )
+    # Dynamic Rainbow Gradient Context
+    buy_pct = threshold_buy
+    sell_pct = threshold_sell
+    hold_pct = sell_pct - buy_pct
+    
+    gradient_html = f"""
+    <div style="margin: 0.5rem 0 1rem; padding: 12px; background: white; border: 2px solid #c9c2b8; box-shadow: 4px 4px 0px 0px rgba(33,52,72,0.1);">
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px;">
+            <span style="color: #16a34a;">Buy Zone (&le;{threshold_buy})</span>
+            <span style="color: #64748b;">Hold Zone ({hold_pct} pts)</span>
+            <span style="color: #dc2626;">Sell Zone (&ge;{threshold_sell})</span>
+        </div>
+        <div style="display: flex; height: 16px; width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,0,0,0.1);">
+            <div style="width: {buy_pct}%; background: linear-gradient(90deg, #22c55e, #16a34a);"></div>
+            <div style="width: {hold_pct}%; background: #f1f5f9; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 100%; height: 2px; background: repeating-linear-gradient(90deg, transparent, transparent 4px, #cbd5e1 4px, #cbd5e1 8px);"></div>
+            </div>
+            <div style="width: {100 - sell_pct}%; background: linear-gradient(90deg, #ef4444, #dc2626);"></div>
+        </div>
+    </div>
+    """
+    st.markdown(gradient_html, unsafe_allow_html=True)
 
     col_ab, col_as = st.columns(2)
     with col_ab:

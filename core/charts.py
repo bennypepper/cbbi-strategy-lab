@@ -213,7 +213,7 @@ def build_equity_chart(result: SimulationResult) -> go.Figure:
     fig.add_trace(go.Scatter(
         x=ph_w.index, y=ph_w["buy_and_hold_value"],
         name="Buy & Hold",
-        line=dict(color=COLORS["benchmark"], width=1.8, dash="dot",
+        line=dict(color=COLORS["benchmark"], width=1.5, dash="dot",
                   shape="spline", smoothing=1.2),
         mode="lines",
         opacity=0.75,
@@ -224,8 +224,8 @@ def build_equity_chart(result: SimulationResult) -> go.Figure:
     fig.add_trace(go.Scatter(
         x=ph_w.index, y=ph_w["portfolio_value"],
         name="Strategy Equity",
-        line=dict(color=COLORS["strategy"], width=2.2,
-                  shape="spline", smoothing=1.2),
+        line=dict(color=COLORS["strategy"], width=1.8,
+                  shape="linear"),
         fill="tonexty",
         fillcolor="rgba(10,124,110,0.08)",
         mode="lines",
@@ -257,8 +257,8 @@ def build_equity_chart(result: SimulationResult) -> go.Figure:
                 mode="markers",
                 marker=dict(
                     symbol=symbol, color=color,
-                    size=10, opacity=0.9,
-                    line=dict(width=1.2, color="rgba(255,255,255,0.7)"),
+                    size=6, opacity=0.85,
+                    line=dict(width=0),
                 ),
                 hovertemplate=(
                     "%{x|%Y-%m-%d}<br>"
@@ -400,8 +400,8 @@ def build_cbbi_chart(
                 name=label, mode="markers",
                 marker=dict(
                     symbol=symbol, color=color,
-                    size=10, opacity=0.9,
-                    line=dict(width=1.2, color="rgba(255,255,255,0.7)"),
+                    size=6, opacity=0.85,
+                    line=dict(width=0),
                 ),
                 hovertemplate=(
                     "%{x|%Y-%m-%d}<br>"
@@ -500,7 +500,7 @@ def build_is_oos_equity_chart(
     fig.add_trace(go.Scatter(
         x=ph_w.index, y=ph_w["buy_and_hold_value"],
         name="Buy & Hold",
-        line=dict(color=COLORS["benchmark"], width=1.6, dash="dot",
+        line=dict(color=COLORS["benchmark"], width=1.5, dash="dot",
                   shape="spline", smoothing=1.2),
         opacity=0.75,
         hovertemplate="%{x|%Y-%m-%d}&nbsp;<b>$%{y:,.0f}</b><extra>B&H</extra>",
@@ -510,8 +510,8 @@ def build_is_oos_equity_chart(
     fig.add_trace(go.Scatter(
         x=is_w.index, y=is_w["portfolio_value"],
         name="Strategy IS (2012–2020)",
-        line=dict(color=COLORS["strategy"], width=2.2,
-                  shape="spline", smoothing=1.2),
+        line=dict(color=COLORS["strategy"], width=1.8,
+                  shape="linear"),
         fill="tonexty",
         fillcolor="rgba(10,124,110,0.09)",
         hovertemplate="%{x|%Y-%m-%d}&nbsp;<b>$%{y:,.0f}</b><extra>IS Strategy</extra>",
@@ -521,8 +521,8 @@ def build_is_oos_equity_chart(
     fig.add_trace(go.Scatter(
         x=oos_w.index, y=oos_w["portfolio_value"],
         name="Strategy OOS (2021–2026)",
-        line=dict(color="#0369a1", width=2.2,
-                  shape="spline", smoothing=1.2),
+        line=dict(color="#0369a1", width=1.8,
+                  shape="linear"),
         fill="tonexty",
         fillcolor="rgba(3,105,161,0.07)",
         hovertemplate="%{x|%Y-%m-%d}&nbsp;<b>$%{y:,.0f}</b><extra>OOS Strategy</extra>",
