@@ -28,7 +28,7 @@ from pathlib import Path
 import streamlit as st
 import pandas as pd
 
-from core.styles import apply_styles
+from core.styles import inject_css
 from core.data_loader import fetch_cbbi_live
 from core.optimizer import (
     run_live_optimization,
@@ -49,7 +49,7 @@ st.set_page_config(
     page_icon="⚙️",
     layout="wide",
 )
-apply_styles()
+inject_css()
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

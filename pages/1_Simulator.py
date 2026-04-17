@@ -40,16 +40,21 @@ def _load_scenario_params(results: dict, obj_key: str) -> dict:
     except (KeyError, TypeError):
         return FALLBACKS.get(obj_key, FALLBACKS["max_return"])
 
+CUSTOM_LABEL = "🔧 Custom (Konfigurasi Manual)"
+
 SCENARIOS = {
     "📈 Maximum Return (Agresif)":         ("max_return",   "Maximum Return"),
     "🛡️ Minimum Drawdown (Konservatif)":   ("min_drawdown", "Minimum Drawdown"),
     "⚖️ Maximum Sharpe Ratio (Balanced)":  ("max_sharpe",   "Maximum Sharpe Ratio"),
-    "🔧 Custom (Konfigurasi Manual)":      (None,           "Custom"),
 }
-SCENARIO_KEYS = list(SCENARIOS.keys())
+HISTORICAL_SCENARIO_KEYS = list(SCENARIOS.keys())
 
-# Live optimized preset (injected dynamically if optimizer has run)
-LIVE_OPTIMIZED_LABEL = "🌐 Live Optimized (Current API)"
+# Live optimized presets (injected dynamically if optimizer has run)
+LIVE_SCENARIOS = {
+    "🌐 Live Optimized (Max Return)": "max_return",
+    "🌐 Live Optimized (Min Drawdown)": "min_drawdown",
+    "🌐 Live Optimized (Max Sharpe)": "max_sharpe",
+}
 
 # ── Load data + research results ─────────────────────────────────────────────
 st.sidebar.markdown("### 🔌 API Settings")
@@ -63,6 +68,14 @@ data_source = st.sidebar.radio(
 if "Live CBBI" in data_source:
     try:
         df_full = fetch_cbbi_live()
+        st.sidebar.markdown(
+            "<div style='font-size:0.8rem; background:rgba(10,124,110,0.1); border-left:3px solid #0a7c6e; padding:10px; margin-top:10px; line-height:1.5;'>"
+            "<b>ℹ️ Live Data Context:</b><br/>"
+            "Simulator applies your chosen slider parameters to <b>today's live CBBI values</b>. It <b>does not</b> automatically run a new grid search.<br/><br/>"
+            "Because the index creator updates the formula and backfills data, live scores differ from the historical CSV. To find parameters optimized for today's formula, run the <b>Optimizer</b> page."
+            "</div>",
+            unsafe_allow_html=True
+        )
     except Exception as e:
         st.sidebar.error(f"Failed to fetch live API: {e}")
         df_full = load_master_dataset()
@@ -92,12 +105,16 @@ col_input, col_results = st.columns([2, 3], gap="large")
 with col_input:
     st.markdown("#### Configuration")
 
-    # If Live CBBI selected + live params exist, offer a "Live Optimized" preset
     live_params = load_live_params() if "Live CBBI" in data_source else None
-    if live_params and live_params.get("status") == "success":
-        available_scenarios = [LIVE_OPTIMIZED_LABEL] + SCENARIO_KEYS
+    
+    if "Live CBBI" in data_source:
+        if live_params and live_params.get("status") == "success":
+            available_scenarios = list(LIVE_SCENARIOS.keys()) + [CUSTOM_LABEL]
+        else:
+            available_scenarios = [CUSTOM_LABEL]
+            st.warning("⚠️ No Live Optimized parameters found. Run the Optimizer page first to unlock presets, or use Custom.")
     else:
-        available_scenarios = SCENARIO_KEYS
+        available_scenarios = HISTORICAL_SCENARIO_KEYS + [CUSTOM_LABEL]
 
     # Scenario selector — mirrors CLI options 1 / 2 / 3
     scenario_label = st.selectbox(
@@ -109,18 +126,22 @@ with col_input:
     )
 
     # Resolve params for the chosen scenario
-    if scenario_label == LIVE_OPTIMIZED_LABEL and live_params:
-        mr = live_params.get("max_return", {})
+    if scenario_label in LIVE_SCENARIOS and live_params:
+        live_key = LIVE_SCENARIOS[scenario_label]
+        live_data = live_params.get(live_key, {})
         obj_key = "__live__"
-        scenario_name = "Live Optimized (Max Return)"
+        scenario_name = scenario_label
         opt = dict(
-            threshold_buy  = int(mr.get("threshold_buy", 30)),
-            threshold_sell = int(mr.get("threshold_sell", 65)),
-            alloc_buy      = int(round(mr.get("allocation_buy_pct", 0.25) * 100)),
-            alloc_sell     = int(round(mr.get("allocation_sell_pct", 0.25) * 100)),
+            threshold_buy  = int(live_data.get("threshold_buy", 30)),
+            threshold_sell = int(live_data.get("threshold_sell", 65)),
+            alloc_buy      = int(round(live_data.get("allocation_buy_pct", 0.25) * 100)),
+            alloc_sell     = int(round(live_data.get("allocation_sell_pct", 0.25) * 100)),
         )
+    elif scenario_label in SCENARIOS:
+        obj_key, scenario_name = SCENARIOS[scenario_label]
     else:
-        obj_key, scenario_name = SCENARIOS.get(scenario_label, (None, "Custom"))
+        obj_key = None
+        scenario_name = "Custom"
 
     # Load optimal params for standard scenario (exactly like CLI)
     if obj_key is not None and obj_key != "__live__":
@@ -129,7 +150,7 @@ with col_input:
         opt = dict(threshold_buy=20, threshold_sell=75, alloc_buy=10, alloc_sell=10)
 
     # Research info callout — mirrors CLI "INFORMASI RISET" block
-    if scenario_label == LIVE_OPTIMIZED_LABEL and live_params:
+    if scenario_label in LIVE_SCENARIOS and live_params:
         gen_at = live_params.get("generated_at", "Unknown")
         date_range = live_params.get("data_date_range", "")
         st.markdown(
