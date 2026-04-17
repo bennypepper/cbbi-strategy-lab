@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+import requests
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 _ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +35,35 @@ def load_master_dataset() -> pd.DataFrame:
     if not isinstance(df.index, pd.DatetimeIndex):
         df.index = pd.to_datetime(df.index)
     return df
+
+
+@st.cache_data(ttl=3600, show_spinner="Fetching Live CBBI Data...")
+def fetch_cbbi_live() -> pd.DataFrame:
+    """
+    Fetch the latest CBBI data from colintalkscrypto API once per hour.
+    Returns a DataFrame formatted exactly like the master_dataset.
+    """
+    url = "https://colintalkscrypto.com/cbbi/data/latest.json"
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    r.raise_for_status()
+    data = r.json()
+    
+    # The API returns dictionary objects where the keys are Unix timestamps.
+    # Convert 'Price' -> 'btc_open', 'Confidence' -> 'trolololo'
+    # Colin's 'Confidence' is the CBBI index score (which we call trolololo in our dataset)
+    price_series = pd.Series(data.get("Price", {}), name="btc_open")
+    cbbi_series = pd.Series(data.get("Confidence", {}), name="trolololo")
+    
+    # Combine them
+    df = pd.concat([price_series, cbbi_series], axis=1)
+    
+    # The index is string unix timestamps, we must convert it to DatetimeIndex
+    df.index = pd.to_datetime(df.index.astype(int), unit='s')
+    
+    # Filter to match our standard starting point of 2012 generally or keep all
+    df = df.sort_index()
+    return df
+
 
 
 def get_dataset_slice(

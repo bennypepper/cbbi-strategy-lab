@@ -8,7 +8,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-from core.data_loader import load_master_dataset, get_dataset_slice, load_research_results
+from core.data_loader import load_master_dataset, fetch_cbbi_live, get_dataset_slice, load_research_results
 from core.engine import run_backtest_full
 from core.charts import build_equity_chart, build_cbbi_chart  # both now Plotly
 from core.styles import inject_css
@@ -48,7 +48,23 @@ SCENARIOS = {
 SCENARIO_KEYS = list(SCENARIOS.keys())
 
 # ── Load data + research results ─────────────────────────────────────────────
-df_full  = load_master_dataset()
+st.sidebar.markdown("### 🔌 API Settings")
+data_source = st.sidebar.radio(
+    "Data Source",
+    options=["🗄️ Historical CSV (Default)", "🟢 Live CBBI API"],
+    index=0,
+    help="Switch between local snapshot and real-time live data directly from Colintalkscrypto API."
+)
+
+if "Live CBBI" in data_source:
+    try:
+        df_full = fetch_cbbi_live()
+    except Exception as e:
+        st.sidebar.error(f"Failed to fetch live API: {e}")
+        df_full = load_master_dataset()
+else:
+    df_full = load_master_dataset()
+
 research = load_research_results()
 DATA_MIN = df_full.index.min().date()
 DATA_MAX = df_full.index.max().date()

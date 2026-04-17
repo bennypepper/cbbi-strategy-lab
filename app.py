@@ -12,9 +12,10 @@ Responsibilities:
 
 import streamlit as st
 
-from core.data_loader import load_master_dataset, load_research_results
+from core.data_loader import load_master_dataset, load_research_results, fetch_cbbi_live
 from core.engine import warmup_numba
 from core.styles import inject_css, ICON_ZAP, ICON_CHART_BARS, ICON_BOOK
+from core.utils import format_percentage, format_currency
 
 # ── Page configuration ────────────────────────────────────────────────────────
 st.set_page_config(
@@ -50,6 +51,10 @@ def _warmup():
 def _preload_data():
     load_master_dataset()
     load_research_results()
+    try:
+        fetch_cbbi_live()
+    except Exception:
+        pass
     return True
 
 
@@ -71,6 +76,72 @@ st.markdown(
     <div class="hero-tagline">
       Test, validate, and explore Bitcoin timing strategies &mdash;
       1.29&thinsp;M optimization trials, 14 years of on-chain data, zero lookahead bias.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ── Dynamic Stats Cards ───────────────────────────────────────────────────────
+df_hist = load_master_dataset()
+try:
+    df_live = fetch_cbbi_live()
+    latest_date = df_live.index.max()
+    latest_row = df_live.loc[latest_date]
+    is_live = True
+except Exception:
+    df_live = df_hist
+    latest_date = df_hist.index.max()
+    latest_row = df_hist.loc[latest_date]
+    is_live = False
+
+latest_cbbi = float(latest_row['trolololo'])
+latest_price = float(latest_row['btc_open'])
+total_days = len(df_live)
+min_date = str(df_live.index.min().date())
+
+# Determine zone and colors
+zone_label = "EXTREME OVERVALUED"
+zone_color = "#ff1744"
+if latest_cbbi < 15:
+    zone_label, zone_color = "EXTREME UNDERVALUED", "#00d2ff"
+elif latest_cbbi < 35:
+    zone_label, zone_color = "UNDERVALUED", "#00e676"
+elif latest_cbbi < 65:
+    zone_label, zone_color = "NEUTRAL", "#ffeb3b"
+elif latest_cbbi < 85:
+    zone_label, zone_color = "OVERVALUED", "#ff9800"
+
+st.markdown(
+    f"""
+    <div style="display:flex; flex-wrap:wrap; gap:1rem; margin-top:1.5rem; margin-bottom:2rem;">
+      <!-- Card 1: Trolololo Index -->
+      <div style="flex:1; min-width:250px; background:var(--card-bg, #1a202c); border-radius:0.75rem; padding:1.5rem; border:1px solid var(--border-color, #2d3748);">
+        <div style="font-size:0.75rem; font-weight:700; color:#a0aec0; letter-spacing:0.05em; margin-bottom:0.5rem; text-transform:uppercase;">Trolololo Index</div>
+        <div style="font-size:2.5rem; font-weight:700; color:{zone_color}; line-height:1; margin-bottom:0.5rem;">{format_percentage(latest_cbbi)}</div>
+        <div style="display:inline-block; background:{zone_color}25; color:{zone_color}; padding:0.25rem 0.6rem; border-radius:0.25rem; font-size:0.7rem; font-weight:800; margin-bottom:1.5rem; text-transform:uppercase; border: 1px solid {zone_color}40;">
+          {zone_label}
+        </div>
+        <div style="height:5px; width:100%; background:linear-gradient(90deg, #00d2ff 0%, #00e676 25%, #ffeb3b 50%, #ff9800 75%, #ff1744 100%); border-radius:3px; position:relative;">
+            <div style="position:absolute; left:{min(latest_cbbi, 100)}%; top:-5px; height:15px; width:4px; background:#ffffff; border-radius:2px; box-shadow:0 0 6px rgba(0,0,0,0.8);"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.65rem; font-weight:600; color:#718096; margin-top:0.6rem;">
+           <span>0%</span><span>50%</span><span>100%</span>
+        </div>
+      </div>
+
+      <!-- Card 2: BTC Price -->
+      <div style="flex:1; min-width:250px; background:var(--card-bg, #1a202c); border-radius:0.75rem; padding:1.5rem; border:1px solid var(--border-color, #2d3748);">
+        <div style="font-size:0.75rem; font-weight:700; color:#a0aec0; letter-spacing:0.05em; margin-bottom:0.5rem; text-transform:uppercase;">BTC Price</div>
+        <div style="font-size:2.5rem; font-weight:700; color:#00e676; line-height:1; margin-bottom:0.5rem;">{format_currency(latest_price)}</div>
+        <div style="font-size:0.9rem; color:#a0aec0;">Current market price</div>
+      </div>
+
+      <!-- Card 3: Data Points -->
+      <div style="flex:1; min-width:250px; background:var(--card-bg, #1a202c); border-radius:0.75rem; padding:1.5rem; border:1px solid var(--border-color, #2d3748);">
+        <div style="font-size:0.75rem; font-weight:700; color:#a0aec0; letter-spacing:0.05em; margin-bottom:0.5rem; text-transform:uppercase;">Data Points</div>
+        <div style="font-size:2.5rem; font-weight:700; color:#f6ad55; line-height:1; margin-bottom:0.5rem;">{total_days:,}</div>
+        <div style="font-size:0.9rem; color:#a0aec0;">Since {min_date}</div>
+      </div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -176,12 +247,10 @@ with col_b:
     st.markdown("### Dataset Information")
 
     # fix #15: spinner communicates data-load latency on first visit
-    with st.spinner("Loading dataset info…"):
-        df_info = load_master_dataset()
-
-    min_d = str(df_info.index.min().date())
-    max_d = str(df_info.index.max().date())
-    n_rows = len(df_info)
+    # fix #15: spinner communicates data-load latency
+    min_d = str(df_live.index.min().date())
+    max_d = str(df_live.index.max().date())
+    n_rows = len(df_live)
 
     # fix #2 & #6: clamp font-size + word-break in global CSS prevents truncation
     st.metric("Data Coverage", f"{min_d} → {max_d}")
@@ -194,15 +263,25 @@ with col_b:
         f"{rr['metadata']['total_trials_per_run']:,} × 2 scenarios",
     )
 
-    st.markdown(
-        """
-        <div class="info-strip">
-        &#128204; Data is static &mdash; frozen at <b>2026-03-31</b>.<br>
-        This app does not fetch live prices.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    if is_live:
+        st.markdown(
+            f"""
+            <div class="info-strip" style="background:rgba(0,230,118,0.1); border-left:4px solid #00e676; padding:1rem; border-radius:0.5rem; color:#cbd5e1; font-size:0.95rem;">
+            &#128308; <b>Live API Connected</b> &mdash; Using latest data up to <b>{max_d}</b>.<br>
+            App fetches daily on-chain updates directly from colintalkscrypto.com endpoints.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f"""
+            <div class="info-strip" style="background:rgba(255,152,0,0.1); border-left:4px solid #ff9800; padding:1rem; border-radius:0.5rem; color:#cbd5e1; font-size:0.95rem;">
+            &#9888;&#65039; <b>Offline Mode</b> &mdash; Live data fetch failed. Displaying static data frozen at <b>{max_d}</b>.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 st.divider()
 
