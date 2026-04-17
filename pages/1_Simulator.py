@@ -8,24 +8,48 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-from core.data_loader import load_master_dataset, get_dataset_slice
+from core.data_loader import load_master_dataset, get_dataset_slice, load_research_results
 from core.engine import run_backtest_full
-from core.charts import build_equity_chart, build_cbbi_chart
+from core.charts import build_equity_chart, build_cbbi_chart  # both now Plotly
 from core.styles import inject_css
+from core.utils import format_percentage, format_currency
 
 st.set_page_config(page_title="Simulator · CBBI Strategy Lab", page_icon="⚡", layout="wide")
 inject_css()
 
-# ── Presets ───────────────────────────────────────────────────────────────────
-PRESETS = {
-    "Conservative": dict(threshold_buy=10, threshold_sell=85, alloc_buy=5,  alloc_sell=5),
-    "Moderate":     dict(threshold_buy=20, threshold_sell=75, alloc_buy=10, alloc_sell=10),
-    "Aggressive":   dict(threshold_buy=30, threshold_sell=65, alloc_buy=20, alloc_sell=20),
-    "Custom":       None,
-}
+# ── Scenario definitions — names match CLI exactly ───────────────────────────
+def _load_scenario_params(results: dict, obj_key: str) -> dict:
+    """
+    Mirror of CLI's load_optimal_params().
+    Reads scenario_2.full_dataset.<obj_key> from the JSON results file.
+    """
+    FALLBACKS = {
+        "max_return":   dict(threshold_buy=45, threshold_sell=64, alloc_buy=25, alloc_sell=25),
+        "min_drawdown": dict(threshold_buy=1,  threshold_sell=55, alloc_buy=1,  alloc_sell=25),
+        "max_sharpe":   dict(threshold_buy=13, threshold_sell=100,alloc_buy=25, alloc_sell=1),
+    }
+    try:
+        p = results["scenario_2"]["full_dataset"][obj_key]
+        return dict(
+            threshold_buy  = int(p["threshold_buy"]),
+            threshold_sell = int(p["threshold_sell"]),
+            alloc_buy      = int(round(p["allocation_buy_pct"]  * 100)),
+            alloc_sell     = int(round(p["allocation_sell_pct"] * 100)),
+        )
+    except (KeyError, TypeError):
+        return FALLBACKS.get(obj_key, FALLBACKS["max_return"])
 
-# ── Load data ─────────────────────────────────────────────────────────────────
-df_full = load_master_dataset()
+SCENARIOS = {
+    "📈 Maximum Return (Agresif)":         ("max_return",   "Maximum Return"),
+    "🛡️ Minimum Drawdown (Konservatif)":   ("min_drawdown", "Minimum Drawdown"),
+    "⚖️ Maximum Sharpe Ratio (Balanced)":  ("max_sharpe",   "Maximum Sharpe Ratio"),
+    "🔧 Custom (Konfigurasi Manual)":      (None,           "Custom"),
+}
+SCENARIO_KEYS = list(SCENARIOS.keys())
+
+# ── Load data + research results ─────────────────────────────────────────────
+df_full  = load_master_dataset()
+research = load_research_results()
 DATA_MIN = df_full.index.min().date()
 DATA_MAX = df_full.index.max().date()
 
@@ -48,35 +72,57 @@ col_input, col_results = st.columns([2, 3], gap="large")
 with col_input:
     st.markdown("#### Configuration")
 
-    # Preset selector
-    preset_name = st.selectbox(
-        "Risk Preset",
-        options=list(PRESETS.keys()),
-        index=1,   # Default: Moderate
-        help="Load a predefined parameter set or choose Custom to set manually.",
+    # Scenario selector — mirrors CLI options 1 / 2 / 3
+    scenario_label = st.selectbox(
+        "🎯 Target Optimisasi",
+        options=SCENARIO_KEYS,
+        index=0,   # Default: Maximum Return — same as CLI default
+        help="Pilih profil berdasarkan hasil klasifikasi Grid Search (1,29 juta trial historis). "
+             "Gunakan parameter optimal, atau pilih Custom untuk konfigurasi mandiri.",
     )
-    preset = PRESETS[preset_name]
+    obj_key, scenario_name = SCENARIOS[scenario_label]
+
+    # Load optimal params for chosen scenario (exactly like CLI)
+    if obj_key is not None:
+        opt = _load_scenario_params(research, obj_key)
+    else:
+        opt = dict(threshold_buy=20, threshold_sell=75, alloc_buy=10, alloc_sell=10)
+
+    # Research info callout — mirrors CLI "INFORMASI RISET" block
+    if obj_key is not None:
+        st.markdown(
+            f"<div class='info-strip' style='margin:0.4rem 0 0.6rem; font-size:0.82rem; line-height:1.8;'>"
+            f"<b>📊 Konfigurasi Optimal Grid Search — {scenario_name}</b><br>"
+            f"Buy Threshold &nbsp;: <b>&le;&nbsp;{opt['threshold_buy']}%</b>"
+            f"&nbsp;&nbsp;|&nbsp;&nbsp;"
+            f"Sell Threshold : <b>&ge;&nbsp;{opt['threshold_sell']}%</b><br>"
+            f"Alokasi Beli &nbsp;&nbsp;: <b>{opt['alloc_buy']}%</b> dari sisa Cash"
+            f"&nbsp;&nbsp;|&nbsp;&nbsp;"
+            f"Alokasi Jual : <b>{opt['alloc_sell']}%</b> dari total BTC"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
 
     # Separator
     st.markdown("---")
 
-    # Parameter sliders — pre-fill from preset
-    buy_default  = preset["threshold_buy"]  if preset else 20
-    sell_default = preset["threshold_sell"] if preset else 75
-    ab_default   = preset["alloc_buy"]      if preset else 10
-    as_default   = preset["alloc_sell"]     if preset else 10
+    # Parameter sliders — pre-filled from selected scenario
+    buy_default  = opt["threshold_buy"]
+    sell_default = opt["threshold_sell"]
+    ab_default   = opt["alloc_buy"]
+    as_default   = opt["alloc_sell"]
 
     threshold_buy = st.slider(
         "📉 Buy Threshold",
-        min_value=1, max_value=45,
+        min_value=1, max_value=99,
         value=buy_default, step=1,
-        help="BUY signal fires when Trolololo drops BELOW this value. Lower = more selective.",
+        help="BUY signal fires when Trolololo is AT OR BELOW this value. Lower = more selective.",
     )
     threshold_sell = st.slider(
         "📈 Sell Threshold",
-        min_value=55, max_value=100,
+        min_value=2, max_value=100,
         value=sell_default, step=1,
-        help="SELL signal fires when Trolololo rises ABOVE this value. Higher = more selective.",
+        help="SELL signal fires when Trolololo is AT OR ABOVE this value. Higher = more selective.",
     )
 
     st.markdown(
@@ -89,10 +135,10 @@ with col_input:
 
     col_ab, col_as = st.columns(2)
     with col_ab:
-        alloc_buy = st.slider("💰 Buy Alloc %", 1, 25, ab_default, 1,
+        alloc_buy = st.slider("💰 Buy Alloc %", 1, 100, ab_default, 1,
                               help="% of available cash deployed per BUY signal.")
     with col_as:
-        alloc_sell = st.slider("💸 Sell Alloc %", 1, 25, as_default, 1,
+        alloc_sell = st.slider("💸 Sell Alloc %", 1, 100, as_default, 1,
                                help="% of BTC holdings sold per SELL signal.")
 
     st.markdown("---")
@@ -201,7 +247,7 @@ with col_results:
         # ── Metric cards ──────────────────────────────────────────────────────
         mc1, mc2, mc3, mc4 = st.columns(4)
 
-        def _fmt_pct(v):  return f"{v*100:+.1f}%"
+        def _fmt_pct(v):  return format_percentage(v * 100)
         def _fmt_signed(v): return f"{v:+.2f}"
 
         with mc1:
@@ -233,63 +279,115 @@ with col_results:
 
         st.markdown("")
 
-        # ── Equity chart ──────────────────────────────────────────────────────
-        fig_equity = build_equity_chart(result)
-        st.plotly_chart(fig_equity, width='stretch')
+        # Equity curve (Plotly — log scale, smooth spline, filled area)
+        chart_equity = build_equity_chart(result)
+        st.plotly_chart(chart_equity, width='stretch')
 
-        # ── CBBI signal chart ─────────────────────────────────────────────────
-        fig_cbbi = build_cbbi_chart(
+        # Trolololo signal chart (Plotly — smooth spline, filled zones)
+        chart_cbbi = build_cbbi_chart(
             df_slice,
             threshold_buy=params["threshold_buy"],
             threshold_sell=params["threshold_sell"],
+            trade_log=result.trade_log,
         )
-        st.plotly_chart(fig_cbbi, width='stretch')
+        st.plotly_chart(chart_cbbi, width='stretch')
 
         # ── Auto-generated summary text ───────────────────────────────────────
         period_yrs = (pd.Timestamp(end_date) - pd.Timestamp(start_date)).days / 365
         st.info(
             f"**Summary:** With a Buy Threshold of **{threshold_buy}** and Sell Threshold of "
-            f"**{threshold_sell}**, your strategy generated a **{m['total_return']*100:+.1f}% total return** "
-            f"over {period_yrs:.1f} years, compared to Buy & Hold at **{bh_r*100:+.1f}%** "
+            f"**{threshold_sell}**, your strategy generated a **{format_percentage(m['total_return']*100)} total return** "
+            f"over {period_yrs:.1f} years, compared to Buy & Hold at **{format_percentage(bh_r*100)}** "
             f"over the same period. "
             f"The strategy completed **{m['trade_count']}** trades "
             f"with a win rate of **{m['win_rate']*100:.1f}%** "
-            f"and a maximum drawdown of **{m['max_drawdown']*100:.1f}%**."
         )
 
-        # ── Trade log ─────────────────────────────────────────────────────────
-        st.markdown("#### 📋 Trade Log")
+# ═══════════════════════════════════════════════════════════════════════════════
+# FULL-WIDTH TRANSACTION HISTORY
+# ═══════════════════════════════════════════════════════════════════════════════
+if "sim_result" in st.session_state:
+    st.markdown("---")
+    st.markdown("### 📋 Riwayat Transaksi")
+    
+    result = st.session_state["sim_result"]
+    params = st.session_state["sim_params"]
+    threshold_buy = params["threshold_buy"]
+    threshold_sell = params["threshold_sell"]
+    
+    tlog = result.trade_log
+    if tlog.empty:
+        st.caption("Tidak ada transaksi yang dieksekusi dengan parameter ini.")
+    else:
+        n_trades = len(tlog)
+        
+        # Determine the start and end dates used in the simulation
+        df_slice = st.session_state["sim_df_slice"]
+        sim_start_date = df_slice.index.min().strftime('%d %b %Y')
+        sim_end_date = df_slice.index.max().strftime('%d %b %Y')
+        period_label = f"{sim_start_date} – {sim_end_date}"
 
-        tlog = result.trade_log
-        if tlog.empty:
-            st.caption("No trades were executed with these parameters.")
-        else:
-            # Style BUY/SELL rows
-            def _highlight_action(row):
-                if row["Action"] == "BUY":
-                    return ["background-color: rgba(34,197,94,0.1)"] * len(row)
-                elif row["Action"] == "SELL":
-                    return ["background-color: rgba(239,68,68,0.1)"] * len(row)
-                return [""] * len(row)
+        st.markdown(
+            f"<div style='font-size:0.85rem; opacity:0.65; margin-bottom:0.6rem;'>"
+            f"<b>{n_trades} transaksi</b> ditemukan selama periode simulasi &nbsp;·&nbsp; {period_label}"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
 
-            n_show = st.slider("Show last N trades", 10, min(500, len(tlog)), min(50, len(tlog)), 10)
-            tlog_show = tlog.tail(n_show).copy()
-            tlog_show["Date"] = tlog_show["Date"].dt.strftime("%Y-%m-%d")
+        n_show = st.slider(
+            "Tampilkan N transaksi terakhir",
+            10, min(500, n_trades), min(100, n_trades), 10,
+            key="tlog_slider",
+        )
+        tlog_show = tlog.tail(n_show).reset_index(drop=True).copy()
+        tlog_show.insert(0, "#", range(n_trades - len(tlog_show) + 1, n_trades + 1))
+        tlog_show["Date"] = pd.to_datetime(tlog_show["Date"]).dt.strftime("%Y-%m-%d")
 
-            styled = tlog_show.style.apply(_highlight_action, axis=1).format({
-                "Exec Price (BTC Open)": "${:,.2f}",
-                "Amount (USD)":          "${:,.2f}",
-                "Portfolio Value After": "${:,.2f}",
-                "Trolololo Signal":      "{:.1f}",
-            })
-
-            st.dataframe(styled, width='stretch', height=320)
-
-            # Download button
-            csv = tlog.to_csv(index=False)
-            st.download_button(
-                "⬇ Export Full Trade Log (CSV)",
-                data=csv,
-                file_name=f"cbbi_trade_log_buy{threshold_buy}_sell{threshold_sell}.csv",
-                mime="text/csv",
+        def _highlight_action(row):
+            color = (
+                "background-color: rgba(34,197,94,0.12)"  if row["Action"] == "BUY"
+                else "background-color: rgba(239,68,68,0.12)" if row["Action"] == "SELL"
+                else ""
             )
+            return [color] * len(row)
+
+        styled = (
+            tlog_show.style
+            .apply(_highlight_action, axis=1)
+            .format({
+                "BTC Price":      format_currency,
+                "Amount (USD)":   format_currency,
+                "BTC Amount":     "{:,.6f}",
+                "CBBI Index":     "{:.1f}%",
+                "Cash After":     format_currency,
+                "BTC Held After": "{:,.6f}",
+                "Equity After":   format_currency,
+            })
+        )
+
+        st.dataframe(
+            styled,
+            width='stretch',
+            height=400,
+            column_config={
+                "#":             st.column_config.NumberColumn("#",            width="small"),
+                "Date":          st.column_config.TextColumn("Tanggal",        width="small"),
+                "Action":        st.column_config.TextColumn("Tipe",           width="small"),
+                "BTC Price":     st.column_config.TextColumn("Harga BTC",      width="medium"),
+                "Amount (USD)":  st.column_config.TextColumn("Jumlah USD",     width="medium"),
+                "BTC Amount":    st.column_config.TextColumn("Jumlah BTC",     width="medium"),
+                "CBBI Index":    st.column_config.TextColumn("Index",          width="small"),
+                "Cash After":    st.column_config.TextColumn("Cash Setelah",   width="medium"),
+                "BTC Held After":st.column_config.TextColumn("BTC Setelah",    width="medium"),
+                "Equity After":  st.column_config.TextColumn("Equity",         width="medium"),
+            },
+        )
+
+        csv = tlog.to_csv(index=False)
+        st.download_button(
+            "⬇ Export Riwayat Transaksi (CSV)",
+            data=csv,
+            file_name=f"cbbi_trade_log_buy{threshold_buy}_sell{threshold_sell}.csv",
+            mime="text/csv",
+        )
+

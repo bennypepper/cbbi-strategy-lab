@@ -22,6 +22,7 @@ from core.charts import (
     build_comparison_chart,
 )
 from core.styles import inject_css
+from core.utils import format_percentage
 
 st.set_page_config(page_title="Research Results · CBBI Strategy Lab", page_icon="🔬", layout="wide")
 inject_css()
@@ -117,7 +118,7 @@ def _render_scenario1_tab(obj_key: str):
 
     with mc1:
         st.markdown("**In-Sample (2012–2020)**")
-        st.metric("Total Return",  f"{is_data['total_return'] * 100:,.0f}%")
+        st.metric("Total Return",  format_percentage(is_data['total_return'] * 100))
         st.metric("Max Drawdown",  f"{is_data['max_drawdown'] * 100:.1f}%")
         st.metric("Sharpe Ratio",  f"{is_data['sharpe_ratio']:.3f}")
         st.metric("Win Rate",      f"{is_data['win_rate'] * 100:.1f}%")
@@ -125,7 +126,7 @@ def _render_scenario1_tab(obj_key: str):
 
     with mc2:
         st.markdown("**Out-of-Sample (2021–2026)**")
-        st.metric("Total Return",  f"{oos_data['total_return'] * 100:.1f}%")
+        st.metric("Total Return",  format_percentage(oos_data['total_return'] * 100))
         st.metric("Max Drawdown",  f"{oos_data['max_drawdown'] * 100:.1f}%")
         st.metric("Sharpe Ratio",  f"{oos_data['sharpe_ratio']:.3f}")
         st.metric("Win Rate",      f"{oos_data['win_rate'] * 100:.1f}%")
@@ -149,9 +150,9 @@ def _render_scenario1_tab(obj_key: str):
     # Buy & Hold comparison
     st.markdown("")
     st.caption(
-        f"📊 Buy & Hold benchmark — IS: **{bh['in_sample']['total_return']*100:,.0f}%** | "
-        f"OOS: **{bh['out_of_sample']['total_return']*100:.1f}%** | "
-        f"Full: **{bh['full_dataset']['total_return']*100:,.0f}%**"
+        f"📊 Buy & Hold benchmark — IS: **{format_percentage(bh['in_sample']['total_return']*100)}** | "
+        f"OOS: **{format_percentage(bh['out_of_sample']['total_return']*100)}** | "
+        f"Full: **{format_percentage(bh['full_dataset']['total_return']*100)}**"
     )
 
     # IS vs OOS equity chart
@@ -217,7 +218,7 @@ def _render_scenario2_tab(obj_key: str):
         st.markdown("**Optimal Parameters (Full Dataset)**")
         st.dataframe(params_table, width='content', hide_index=True, height=180)
         st.markdown("")
-        st.metric("Total Return",  f"{full_data['total_return'] * 100:,.0f}%")
+        st.metric("Total Return",  format_percentage(full_data['total_return'] * 100))
         st.metric("Max Drawdown",  f"{full_data['max_drawdown'] * 100:.1f}%")
         st.metric("Sharpe Ratio",  f"{full_data['sharpe_ratio']:.3f}")
         st.metric("Win Rate",      f"{full_data['win_rate'] * 100:.1f}%")
@@ -255,17 +256,17 @@ bh_oos  = bh["out_of_sample"]
 comp_df = pd.DataFrame({
     "Metric": ["Total Return", "Max Drawdown", "Sharpe Ratio"],
     "Scenario 1 (OOS, Validated)": [
-        f"{s1_oos['total_return']*100:.1f}%",
+        format_percentage(s1_oos['total_return']*100),
         f"{s1_oos['max_drawdown']*100:.1f}%",
         f"{s1_oos['sharpe_ratio']:.3f}",
     ],
     "Scenario 2 (Full, Exploration)": [
-        f"{s2_full['total_return']*100:,.0f}%",
+        format_percentage(s2_full['total_return']*100),
         f"{s2_full['max_drawdown']*100:.1f}%",
         f"{s2_full['sharpe_ratio']:.3f}",
     ],
     "Buy & Hold (OOS period)": [
-        f"{bh_oos['total_return']*100:.1f}%",
+        format_percentage(bh_oos['total_return']*100),
         f"{bh_oos['max_drawdown']*100:.1f}%",
         f"{bh_oos['sharpe_ratio']:.3f}",
     ],

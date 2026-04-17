@@ -23,7 +23,7 @@ This app uses **Trolololo (Logarithmic Regression / Rainbow Chart)** as the prim
 ## Running Locally
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/cbbi-strategy-lab.git
+git clone https://github.com/bennypepper/cbbi-strategy-lab.git
 cd cbbi-strategy-lab
 pip install -r requirements.txt
 streamlit run app.py
