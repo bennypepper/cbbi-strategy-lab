@@ -58,7 +58,7 @@ def fetch_cbbi_live() -> pd.DataFrame:
     # Convert 'Price' -> 'btc_open', 'Confidence' -> 'trolololo'
     # Colin's 'Confidence' is the CBBI index score (which we call trolololo in our dataset)
     price_series = pd.Series(data.get("Price", {}), name="btc_open")
-    cbbi_series = pd.Series(data.get("Confidence", {}), name="trolololo")
+    cbbi_series = pd.Series(data.get("Confidence", {}), name="trolololo") * 100.0
     
     # Combine them
     df = pd.concat([price_series, cbbi_series], axis=1)
