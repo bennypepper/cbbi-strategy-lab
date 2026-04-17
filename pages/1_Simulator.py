@@ -13,6 +13,7 @@ from core.engine import run_backtest_full
 from core.charts import build_equity_chart, build_cbbi_chart  # both now Plotly
 from core.styles import inject_css
 from core.utils import format_percentage, format_currency
+from core.optimizer import load_live_params
 
 st.set_page_config(page_title="Simulator · CBBI Strategy Lab", page_icon="⚡", layout="wide")
 inject_css()
@@ -46,6 +47,9 @@ SCENARIOS = {
     "🔧 Custom (Konfigurasi Manual)":      (None,           "Custom"),
 }
 SCENARIO_KEYS = list(SCENARIOS.keys())
+
+# Live optimized preset (injected dynamically if optimizer has run)
+LIVE_OPTIMIZED_LABEL = "🌐 Live Optimized (Current API)"
 
 # ── Load data + research results ─────────────────────────────────────────────
 st.sidebar.markdown("### 🔌 API Settings")
@@ -88,24 +92,57 @@ col_input, col_results = st.columns([2, 3], gap="large")
 with col_input:
     st.markdown("#### Configuration")
 
+    # If Live CBBI selected + live params exist, offer a "Live Optimized" preset
+    live_params = load_live_params() if "Live CBBI" in data_source else None
+    if live_params and live_params.get("status") == "success":
+        available_scenarios = [LIVE_OPTIMIZED_LABEL] + SCENARIO_KEYS
+    else:
+        available_scenarios = SCENARIO_KEYS
+
     # Scenario selector — mirrors CLI options 1 / 2 / 3
     scenario_label = st.selectbox(
         "🎯 Target Optimisasi",
-        options=SCENARIO_KEYS,
-        index=0,   # Default: Maximum Return — same as CLI default
-        help="Pilih profil berdasarkan hasil klasifikasi Grid Search (1,29 juta trial historis). "
+        options=available_scenarios,
+        index=0,
+        help="Pilih profil berdasarkan hasil klasifikasi Grid Search. "
              "Gunakan parameter optimal, atau pilih Custom untuk konfigurasi mandiri.",
     )
-    obj_key, scenario_name = SCENARIOS[scenario_label]
 
-    # Load optimal params for chosen scenario (exactly like CLI)
-    if obj_key is not None:
+    # Resolve params for the chosen scenario
+    if scenario_label == LIVE_OPTIMIZED_LABEL and live_params:
+        mr = live_params.get("max_return", {})
+        obj_key = "__live__"
+        scenario_name = "Live Optimized (Max Return)"
+        opt = dict(
+            threshold_buy  = int(mr.get("threshold_buy", 30)),
+            threshold_sell = int(mr.get("threshold_sell", 65)),
+            alloc_buy      = int(round(mr.get("allocation_buy_pct", 0.25) * 100)),
+            alloc_sell     = int(round(mr.get("allocation_sell_pct", 0.25) * 100)),
+        )
+    else:
+        obj_key, scenario_name = SCENARIOS.get(scenario_label, (None, "Custom"))
+
+    # Load optimal params for standard scenario (exactly like CLI)
+    if obj_key is not None and obj_key != "__live__":
         opt = _load_scenario_params(research, obj_key)
     else:
         opt = dict(threshold_buy=20, threshold_sell=75, alloc_buy=10, alloc_sell=10)
 
     # Research info callout — mirrors CLI "INFORMASI RISET" block
-    if obj_key is not None:
+    if scenario_label == LIVE_OPTIMIZED_LABEL and live_params:
+        gen_at = live_params.get("generated_at", "Unknown")
+        date_range = live_params.get("data_date_range", "")
+        st.markdown(
+            f"<div class='info-strip' style='margin:0.4rem 0 0.6rem; font-size:0.82rem; line-height:1.8;'>"
+            f"<b>🌐 Live Optimized Parameters</b><br>"
+            f"Generated: <b>{gen_at}</b><br>"
+            f"Trained on: <b>{date_range}</b><br>"
+            f"Buy ≤ <b>{opt['threshold_buy']}%</b> &nbsp;|&nbsp; Sell ≥ <b>{opt['threshold_sell']}%</b><br>"
+            f"Alloc: <b>{opt['alloc_buy']}%</b> buy / <b>{opt['alloc_sell']}%</b> sell"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+    elif obj_key is not None and obj_key != "__live__":
         st.markdown(
             f"<div class='info-strip' style='margin:0.4rem 0 0.6rem; font-size:0.82rem; line-height:1.8;'>"
             f"<b>📊 Konfigurasi Optimal Grid Search — {scenario_name}</b><br>"
