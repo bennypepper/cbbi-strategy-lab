@@ -40,11 +40,11 @@ def _load_scenario_params(results: dict, obj_key: str) -> dict:
     except (KeyError, TypeError):
         return FALLBACKS.get(obj_key, FALLBACKS["max_return"])
 
-CUSTOM_LABEL = "🔧 Custom (Konfigurasi Manual)"
+CUSTOM_LABEL = "🔧 Custom (Manual Configuration)"
 
 SCENARIOS = {
-    "📈 Maximum Return (Agresif)":         ("max_return",   "Maximum Return"),
-    "🛡️ Minimum Drawdown (Konservatif)":   ("min_drawdown", "Minimum Drawdown"),
+    "📈 Maximum Return (Aggressive)":         ("max_return",   "Maximum Return"),
+    "🛡️ Minimum Drawdown (Conservative)":   ("min_drawdown", "Minimum Drawdown"),
     "⚖️ Maximum Sharpe Ratio (Balanced)":  ("max_sharpe",   "Maximum Sharpe Ratio"),
 }
 HISTORICAL_SCENARIO_KEYS = list(SCENARIOS.keys())
@@ -118,11 +118,11 @@ with col_input:
 
     # Scenario selector — mirrors CLI options 1 / 2 / 3
     scenario_label = st.selectbox(
-        "🎯 Target Optimisasi",
+        "🎯 Optimization Target",
         options=available_scenarios,
         index=0,
-        help="Pilih profil berdasarkan hasil klasifikasi Grid Search. "
-             "Gunakan parameter optimal, atau pilih Custom untuk konfigurasi mandiri.",
+        help="Choose a profile based on Grid Search results. "
+             "Use optimal parameters, or select Custom for manual configuration.",
     )
 
     # Resolve params for the chosen scenario
@@ -166,13 +166,13 @@ with col_input:
     elif obj_key is not None and obj_key != "__live__":
         st.markdown(
             f"<div class='info-strip' style='margin:0.4rem 0 0.6rem; font-size:0.82rem; line-height:1.8;'>"
-            f"<b>📊 Konfigurasi Optimal Grid Search — {scenario_name}</b><br>"
+            f"<b>📊 Optimal Grid Search Configuration — {scenario_name}</b><br>"
             f"Buy Threshold &nbsp;: <b>&le;&nbsp;{opt['threshold_buy']}%</b>"
             f"&nbsp;&nbsp;|&nbsp;&nbsp;"
             f"Sell Threshold : <b>&ge;&nbsp;{opt['threshold_sell']}%</b><br>"
-            f"Alokasi Beli &nbsp;&nbsp;: <b>{opt['alloc_buy']}%</b> dari sisa Cash"
+            f"Buy Alloc &nbsp;&nbsp;: <b>{opt['alloc_buy']}%</b> of available Cash"
             f"&nbsp;&nbsp;|&nbsp;&nbsp;"
-            f"Alokasi Jual : <b>{opt['alloc_sell']}%</b> dari total BTC"
+            f"Sell Alloc : <b>{opt['alloc_sell']}%</b> of total BTC"
             f"</div>",
             unsafe_allow_html=True,
         )
@@ -220,7 +220,11 @@ with col_input:
         </div>
     </div>
     """
-    st.markdown(gradient_html, unsafe_allow_html=True)
+    st.markdown(
+        gradient_html, 
+        unsafe_allow_html=True, 
+        help="Visual representation of the Buy, Hold, and Sell zones based on your selected thresholds."
+    )
 
     col_ab, col_as = st.columns(2)
     with col_ab:
@@ -352,7 +356,7 @@ with col_results:
         with hero1:
             st.markdown(f"""
             <div class="metric-card" style="border-left:4px solid #0a7c6e">
-              <div class="metric-label">💼 Portfolio Akhir</div>
+              <div class="metric-label">💼 Final Portfolio</div>
               <div style="font-size:1.65rem;font-weight:800;margin:0.35rem 0;letter-spacing:-0.5px">
                 {format_currency(final_pv)}
               </div>
@@ -422,7 +426,7 @@ with col_results:
         with pc1:
             st.markdown(f"""
             <div class="metric-card">
-              <div class="metric-label" style="text-transform:uppercase; font-size:0.75rem; letter-spacing:1px; color:var(--muted); margin-bottom:0.5rem;">SISA ASET (CASH & BTC)</div>
+              <div class="metric-label" style="text-transform:uppercase; font-size:0.75rem; letter-spacing:1px; color:var(--muted); margin-bottom:0.5rem;">REMAINING ASSETS (CASH & BTC)</div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
                 <div>
                   <div style="font-size:1.35rem;font-weight:800;color:var(--text);letter-spacing:-0.5px">{format_currency(m['final_cash'])}</div>
@@ -467,12 +471,12 @@ with col_results:
         buys  = m.get("buy_count", 0)
         sells = m.get("sell_count", 0)
         st.info(
-            f"**Summary:** Dengan Buy Threshold **{threshold_buy}** dan Sell Threshold **{threshold_sell}**, "
-            f"strategi menghasilkan **{format_percentage(m['total_return']*100)} total return** "
-            f"selama {period_yrs:.1f} tahun, dibanding HODL **{format_percentage(bm['total_return']*100)}**. "
-            f"Total **{m['trade_count']} transaksi** (🟢 {buys} beli · 🔴 {sells} jual) "
-            f"dengan win rate **{m['win_rate']*100:.1f}%**. "
-            f"Portofolio akhir: **{format_currency(final_pv)}** vs HODL **{format_currency(final_bh)}** — {diff_label}."
+            f"**Summary:** With a Buy Threshold of **{threshold_buy}** and Sell Threshold of **{threshold_sell}**, "
+            f"the strategy generated a **{format_percentage(m['total_return']*100)} total return** "
+            f"over {period_yrs:.1f} years, compared to **{format_percentage(bm['total_return']*100)}** with HODL. "
+            f"Total **{m['trade_count']} trades** (🟢 {buys} buys · 🔴 {sells} sells) "
+            f"with a win rate of **{m['win_rate']*100:.1f}%**. "
+            f"Final portfolio: **{format_currency(final_pv)}** vs HODL **{format_currency(final_bh)}** — {diff_label}."
         )
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -480,7 +484,7 @@ with col_results:
 # ═══════════════════════════════════════════════════════════════════════════════
 if "sim_result" in st.session_state:
     st.markdown("---")
-    st.markdown("### 📋 Riwayat Transaksi")
+    st.markdown("### 📋 Transaction History")
     
     result = st.session_state["sim_result"]
     params = st.session_state["sim_params"]
@@ -489,7 +493,7 @@ if "sim_result" in st.session_state:
     
     tlog = result.trade_log
     if tlog.empty:
-        st.caption("Tidak ada transaksi yang dieksekusi dengan parameter ini.")
+        st.caption("No transactions were executed with these parameters.")
     else:
         n_trades = len(tlog)
         
@@ -501,13 +505,13 @@ if "sim_result" in st.session_state:
 
         st.markdown(
             f"<div style='font-size:0.85rem; opacity:0.65; margin-bottom:0.6rem;'>"
-            f"<b>{n_trades} transaksi</b> ditemukan selama periode simulasi &nbsp;·&nbsp; {period_label}"
+            f"<b>{n_trades} transactions</b> found during the simulation period &nbsp;·&nbsp; {period_label}"
             f"</div>",
             unsafe_allow_html=True,
         )
 
         n_show = st.slider(
-            "Tampilkan N transaksi terakhir",
+            "Show last N transactions",
             10, min(500, n_trades), min(100, n_trades), 10,
             key="tlog_slider",
         )
@@ -543,23 +547,22 @@ if "sim_result" in st.session_state:
             height=400,
             column_config={
                 "#":             st.column_config.NumberColumn("#",            width="small"),
-                "Date":          st.column_config.TextColumn("Tanggal",        width="small"),
-                "Action":        st.column_config.TextColumn("Tipe",           width="small"),
-                "BTC Price":     st.column_config.TextColumn("Harga BTC"),
-                "Amount (USD)":  st.column_config.TextColumn("Jumlah USD"),
-                "BTC Amount":    st.column_config.TextColumn("Jumlah BTC"),
+                "Date":          st.column_config.TextColumn("Date",           width="small"),
+                "Action":        st.column_config.TextColumn("Action",         width="small"),
+                "BTC Price":     st.column_config.TextColumn("BTC Price"),
+                "Amount (USD)":  st.column_config.TextColumn("Amount (USD)"),
+                "BTC Amount":    st.column_config.TextColumn("Amount (BTC)"),
                 "CBBI Index":    st.column_config.TextColumn("Index",          width="small"),
-                "Cash After":    st.column_config.TextColumn("Cash Setelah"),
-                "BTC Held After":st.column_config.TextColumn("BTC Setelah"),
+                "Cash After":    st.column_config.TextColumn("Cash After"),
+                "BTC Held After":st.column_config.TextColumn("BTC After"),
                 "Equity After":  st.column_config.TextColumn("Equity"),
             },
         )
 
-        csv = tlog.to_csv(index=False)
+        csv_data = tlog.to_csv(index=False)
         st.download_button(
-            "⬇ Export Riwayat Transaksi (CSV)",
-            data=csv,
-            file_name=f"cbbi_trade_log_buy{threshold_buy}_sell{threshold_sell}.csv",
+            "⬇ Export Transaction History (CSV)",
+            data=csv_data,
+            file_name=f"sim_trade_log_{scenario_name.replace(' ', '_').lower()}.csv",
             mime="text/csv",
         )
-
