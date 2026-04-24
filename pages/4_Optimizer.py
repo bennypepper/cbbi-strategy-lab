@@ -9,7 +9,7 @@ Colin's ever-evolving index formula.
 
 Academic context
 ----------------
-The core research (PKL_v4) was conducted on a frozen snapshot (master_dataset.parquet).
+The core research (the core research repository) was conducted on a frozen snapshot (master_dataset.parquet).
 That snapshot is permanently fixed — changing it would compromise reproducibility.
 
 This optimizer is a practical DEPLOYMENT extension: it finds parameters that

@@ -1,7 +1,7 @@
 """
 core/engine.py
 ==============
-Backtest engine adapted from PKL_v4/src/optimization/engine.py.
+Backtest engine adapted from the core research repository/src/optimization/engine.py.
 
 Two functions:
   - run_backtest_numba()  : JIT-compiled, returns scalars only. Used for fast

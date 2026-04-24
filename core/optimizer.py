@@ -13,7 +13,7 @@ stay aligned with the current (ever-evolving) CBBI formula — addressing the
 Architecture note
 -----------------
 This is a WEBAPP extension for practical deployment.
-The academic research (PKL_v4) was conducted on a frozen snapshot (master_dataset.parquet)
+The academic research (the core research repository) was conducted on a frozen snapshot (master_dataset.parquet)
 and its results are fixed. This optimizer produces a `live_optimal_params.json`
 used only by the Simulator's "Live API" mode.
 """
@@ -37,7 +37,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 LIVE_PARAMS_PATH = _ROOT / "data" / "live_optimal_params.json"
 
 
-# ── Grid search parameter space (mirrors PKL_v4 methodology) ────────────────
+# ── Grid search parameter space (mirrors the core research repository methodology) ────────────────
 BUY_THRESHOLDS  = list(range(1, 50, 2))     # 1, 3, 5 … 49  (25 values)
 SELL_THRESHOLDS = list(range(50, 101, 2))   # 50, 52 … 100  (26 values)
 ALLOC_STEPS     = [0.01, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]  # 7 values each
