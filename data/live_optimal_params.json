@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-04-17 14:15:11",
+  "generated_at": "2026-04-24 16:34:58",
   "status": "success",
   "total_combinations": 31850,
-  "elapsed_seconds": 0.15,
+  "elapsed_seconds": 0.24,
   "data_source": "live_cbbi_api",
   "data_date_range": "2011-06-27 \u2192 2020-12-31",
   "max_return": {
@@ -26,14 +26,14 @@
     "trade_count": 279
   },
   "min_drawdown": {
-    "threshold_buy": 11,
-    "threshold_sell": 100,
-    "allocation_buy_pct": 0.25,
-    "allocation_sell_pct": 0.01,
-    "total_return": 11444.809802,
-    "sharpe_ratio": 1.320361,
-    "max_drawdown": -0.845244,
-    "trade_count": 41
+    "threshold_buy": 1,
+    "threshold_sell": 50,
+    "allocation_buy_pct": 0.01,
+    "allocation_sell_pct": 0.05,
+    "total_return": 0.060033,
+    "sharpe_ratio": 0.712572,
+    "max_drawdown": -0.01561,
+    "trade_count": 543
   },
   "buy_and_hold": {
     "total_return": 1731.45891

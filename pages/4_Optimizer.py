@@ -87,7 +87,7 @@ st.markdown("""
 # ── Context banner ────────────────────────────────────────────────────────────
 
 st.info(
-    "📌 **Research Scope Note** — The academic backtest (PKL_v4) used a frozen snapshot. "
+    "📌 **Research Scope Note** — The academic backtest used a frozen snapshot. "
     "This optimizer is a *practical extension* outside that scope. "
     "Results here are for live deployment only — not for comparing against the IS/OOS research findings.",
     icon=None,
