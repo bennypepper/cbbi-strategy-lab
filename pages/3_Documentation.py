@@ -18,12 +18,13 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "What is CBBI?",
     "Strategy Logic",
     "Metric Glossary",
     "Research Methodology",
     "Disclaimer & Limitations",
+    "About the Author",
 ])
 
 # ── Tab 1: What is CBBI ───────────────────────────────────────────────────────
@@ -297,4 +298,18 @@ The OOS forward test provides evidence of generalizability, but is not proof of 
 
 This application is not affiliated with, endorsed by, or connected to CBBI, cbbi.info,
 Cole Garner, Yahoo Finance, or any cryptocurrency exchange.
+    """)
+
+# ── Tab 6: About the Author ───────────────────────────────────────────────────
+with tab6:
+    st.markdown("""
+### About the Author
+
+**Benedict Pepper** is an Informatics Engineering student at **Ma Chung University**. 
+This web application was developed as the public deliverable for his undergraduate research (PKL / Internship) in 2026.
+
+- **GitHub:** [github.com/bennypepper](https://github.com/bennypepper)
+- **Research Repository:** [cbbi-optimization-research](https://github.com/bennypepper/cbbi-optimization-research)
+
+*The complete source code, mathematical methodologies, and datasets used in this research are open-sourced for academic transparency.*
     """)

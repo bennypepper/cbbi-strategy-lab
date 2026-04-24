@@ -434,3 +434,14 @@ def inject_css() -> None:
     Call this once per page, immediately after st.set_page_config().
     """
     st.markdown(_GLOBAL_CSS, unsafe_allow_html=True)
+    
+    st.sidebar.markdown("---")
+    st.sidebar.markdown(
+        "<div style='text-align: center; color: #64748b; font-size: 0.8rem; line-height: 1.5;'>"
+        "Built with ☕ by <br>"
+        "<a href='https://github.com/bennypepper' target='_blank' style='color: #0a7c6e; font-weight: 600; text-decoration: none;'>Benedict Pepper</a><br>"
+        "Ma Chung University<br>"
+        "PKL Research © 2026"
+        "</div>", 
+        unsafe_allow_html=True
+    )
