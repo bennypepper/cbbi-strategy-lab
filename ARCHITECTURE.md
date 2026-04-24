@@ -1,10 +1,10 @@
-# Product Requirements Document
+# System Architecture & Technical Specification
 ## CBBI Strategy Lab — Interactive Backtesting Web Application
 
 **Version:** 1.0  
 **Date:** April 2026  
 **Author:** Solo Developer  
-**Status:** Active Development  
+**Status:** Production (Deployed)  
 **Repo:** `cbbi-strategy-lab`
 
 ---
@@ -56,7 +56,7 @@ The application uses **Trolololo (Logarithmic Regression / Rainbow Chart)** as t
 ```
 cbbi-strategy-lab/
 ├── app.py                          # Streamlit entry point (Home / nav hub)
-├── PRD.md                          # This document
+├── ARCHITECTURE.md                 # This document
 ├── README.md                       # Public-facing repo description
 ├── requirements.txt                # Python dependencies
 ├── .gitignore
@@ -424,25 +424,13 @@ The following items are explicitly **not** in scope for this application:
 
 ---
 
-## 8. Success Criteria
+## 8. System Verification Checks
 
-- [ ] App loads and is publicly accessible via Streamlit Community Cloud URL
-- [ ] Simulator runs any valid parameter combination and returns results in < 1s
-- [ ] Equity curve, CBBI chart, and trade log all render correctly post-simulation
-- [ ] Research Results page displays both scenarios with disclaimer visible before Scenario 2 numbers
-- [ ] Sensitivity heatmaps render correctly from trial log parquets
-- [ ] Download buttons return valid CSV and JSON files
-- [ ] Numba JIT warmup eliminates cold-start delay on first simulation click
-- [ ] All three pages navigable without error on Chrome, Firefox, Edge
-
----
-
-## 9. Development Phases
-
-| Phase | Scope | Status |
-|---|---|---|
-| **9.1 Foundation** | Project structure, `core/engine.py`, `core/data_loader.py`, `requirements.txt`, `app.py` home page | ⏳ |
-| **9.2 Simulator** | `core/simulator.py`, `core/charts.py`, `pages/1_Simulator.py` full implementation | ⏳ |
-| **9.3 Research Results** | `pages/2_Research_Results.py`, heatmap builder, comparison table | ⏳ |
-| **9.4 Documentation** | `pages/3_Documentation.py`, full content | ⏳ |
-| **9.5 Polish & Deploy** | UI refinement, Numba warmup, deploy to Streamlit Cloud | ⏳ |
+- App loads and is publicly accessible via Streamlit Community Cloud URL
+- Simulator runs any valid parameter combination and returns results in < 1s
+- Equity curve, CBBI chart, and trade log all render correctly post-simulation
+- Research Results page displays both scenarios with disclaimer visible before Scenario 2 numbers
+- Sensitivity heatmaps render correctly from trial log parquets
+- Download buttons return valid CSV and JSON files
+- Numba JIT warmup eliminates cold-start delay on first simulation click
+- All three pages navigable without error on Chrome, Firefox, Edge
