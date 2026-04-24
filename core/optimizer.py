@@ -303,7 +303,7 @@ def run_live_optimization(
 
     best_return   = _best_row(valid, 4, True)
     best_sharpe   = _best_row(valid, 5, True)
-    best_drawdown = _best_row(valid, 6, False)  # least negative
+    best_drawdown = _best_row(valid, 6, True)   # maximize → least negative (closest to 0) = smallest drawdown
 
     # Buy & Hold benchmark on IS period
     bh_start = float(open_prices[0])
