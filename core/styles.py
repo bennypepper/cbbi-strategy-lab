@@ -394,6 +394,36 @@ _GLOBAL_CSS = """
     transform: translate(2px, 2px) !important;
     box-shadow: 0px 0px 0px !important;
   }
+
+  .metric-label {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.68rem !important;
+    color: #547792 !important;
+    opacity: 1 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.12em !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.35rem;
+  }
+  .metric-value {
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-size: clamp(0.9rem, 1.8vw, 1.5rem) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1.25 !important;
+    color: #0a7c6e !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+    margin-bottom: 0.25rem;
+  }
+  .metric-subtext {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.75rem !important;
+    color: #64748b !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+  }
 </style>
 """
 
