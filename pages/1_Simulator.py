@@ -470,13 +470,15 @@ with col_results:
         period_yrs = (pd.Timestamp(end_date) - pd.Timestamp(start_date)).days / 365
         buys  = m.get("buy_count", 0)
         sells = m.get("sell_count", 0)
+        pv_fmt = format_currency(final_pv).replace('$', r'\$')
+        bh_fmt = format_currency(final_bh).replace('$', r'\$')
         st.info(
             f"**Summary:** With a Buy Threshold of **{threshold_buy}** and Sell Threshold of **{threshold_sell}**, "
             f"the strategy generated a **{format_percentage(m['total_return']*100)} total return** "
             f"over {period_yrs:.1f} years, compared to **{format_percentage(bm['total_return']*100)}** with HODL. "
             f"Total **{m['trade_count']} trades** (🟢 {buys} buys · 🔴 {sells} sells) "
             f"with a win rate of **{m['win_rate']*100:.1f}%**. "
-            f"Final portfolio: **{format_currency(final_pv).replace('$', r'\\$')}** vs HODL **{format_currency(final_bh).replace('$', r'\\$')}** — {diff_label}."
+            f"Final portfolio: **{pv_fmt}** vs HODL **{bh_fmt}** — {diff_label}."
         )
 
 # ═══════════════════════════════════════════════════════════════════════════════
