@@ -66,3 +66,7 @@ This application is for educational and academic purposes only. All results are 
 - **Data sources:** CBBI official API (cbbi.info) and Yahoo Finance BTC-USD
 - **Optimization:** Grid Search across 1,293,750 parameter combinations
 - **Framework:** Undergraduate Research (PKL), 2026
+
+## License
+
+This project is licensed under the terms of the [LICENSE](LICENSE) file included in this repository.
