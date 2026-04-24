@@ -68,7 +68,8 @@ _GLOBAL_CSS = """
   }
 
   /* ── Metric cards ── */
-  [data-testid="metric-container"] {
+  [data-testid="metric-container"],
+  .metric-card {
     background: #ffffff;
     border: 2px solid #d4cdc4;
     border-radius: 0px !important;
@@ -77,7 +78,8 @@ _GLOBAL_CSS = """
     transition: box-shadow 0.15s, transform 0.15s;
     overflow: hidden;
   }
-  [data-testid="metric-container"]:hover {
+  [data-testid="metric-container"]:hover,
+  .metric-card:hover {
     box-shadow: 6px 6px 0px 0px rgba(33, 52, 72, 0.28);
     transform: translate(-1px, -1px);
   }
