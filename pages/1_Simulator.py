@@ -375,69 +375,75 @@ with col_results:
         st.markdown("")
 
         # ── Row 2: Core metric cards ──────────────────────────────────────────
-        mc1, mc2, mc3, mc4 = st.columns(4)
+        mc1, mc2, mc3 = st.columns(3)
         with mc1:
-            st.metric(
-                "Max Drawdown",
-                _fmt_pct(-m["max_drawdown"]),
-                delta=m.get("max_drawdown_date", ""),
-                delta_color="off",
-                help="Date when the largest peak-to-trough decline occurred.",
-            )
+            st.markdown(f"""
+            <div class="metric-card">
+              <div class="metric-label" style="text-transform:uppercase; font-size:0.75rem; letter-spacing:1px; color:var(--muted); margin-bottom:0.5rem;">MAX DRAWDOWN</div>
+              <div style="font-size:1.65rem;font-weight:800;margin:0.2rem 0;color:var(--text);letter-spacing:-0.5px">
+                {_fmt_pct(-m["max_drawdown"])}
+              </div>
+              <div style="font-size:0.85rem;color:var(--muted);font-weight:500;margin-top:0.3rem;">
+                <span style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;">📅 {m.get("max_drawdown_date", "")}</span>
+              </div>
+            </div>""", unsafe_allow_html=True)
+            
         with mc2:
-            st.metric(
-                "Sharpe Ratio",
-                f"{m['sharpe_ratio']:.2f}",
-                delta=f"B&H: {bm['sharpe_ratio']:.2f}",
-                delta_color="off",
-            )
+            st.markdown(f"""
+            <div class="metric-card">
+              <div class="metric-label" style="text-transform:uppercase; font-size:0.75rem; letter-spacing:1px; color:var(--muted); margin-bottom:0.5rem;">SHARPE RATIO</div>
+              <div style="font-size:1.65rem;font-weight:800;margin:0.2rem 0;color:var(--text);letter-spacing:-0.5px">
+                {m['sharpe_ratio']:.2f}
+              </div>
+              <div style="font-size:0.85rem;color:var(--muted);font-weight:500;margin-top:0.3rem;">
+                <span style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;">⚖️ B&H: {bm['sharpe_ratio']:.2f}</span>
+              </div>
+            </div>""", unsafe_allow_html=True)
+            
         with mc3:
             buys  = m.get("buy_count", 0)
             sells = m.get("sell_count", 0)
-            st.metric(
-                "Total Trades",
-                str(m["trade_count"]),
-                delta=f"🟢 {buys} Buys  🔴 {sells} Sells",
-                delta_color="off",
-            )
-        with mc4:
             wr_pct = m["win_rate"] * 100
-            st.metric(
-                "Win Rate",
-                f"{wr_pct:.1f}%",
-                delta=f"{sells} SELL trades evaluated",
-                delta_color="off",
-                help="Win rate = % of SELL trades that were profitable vs avg entry price.",
-            )
+            st.markdown(f"""
+            <div class="metric-card">
+              <div class="metric-label" style="text-transform:uppercase; font-size:0.75rem; letter-spacing:1px; color:var(--muted); margin-bottom:0.5rem;">TOTAL TRADES & WIN RATE</div>
+              <div style="font-size:1.65rem;font-weight:800;margin:0.2rem 0;color:var(--text);letter-spacing:-0.5px">
+                {m['trade_count']} <span style="font-size:1rem;color:var(--muted);font-weight:600;">({wr_pct:.1f}%)</span>
+              </div>
+              <div style="font-size:0.85rem;color:var(--muted);font-weight:500;margin-top:0.3rem;">
+                <span style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;">🟢 {buys} Buys &nbsp;🔴 {sells} Sells</span>
+              </div>
+            </div>""", unsafe_allow_html=True)
 
         st.markdown("")
 
         # ── Row 3: Portfolio composition + vs HODL ────────────────────────────
-        pc1, pc2, pc3 = st.columns(3)
+        pc1, pc2 = st.columns(2)
         with pc1:
             st.markdown(f"""
             <div class="metric-card">
-              <div class="metric-label">💵 Sisa Cash</div>
-              <div style="font-size:1.15rem;font-weight:700;margin-top:0.35rem">
-                {format_currency(m['final_cash'])}
+              <div class="metric-label" style="text-transform:uppercase; font-size:0.75rem; letter-spacing:1px; color:var(--muted); margin-bottom:0.5rem;">SISA ASET (CASH & BTC)</div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+                <div>
+                  <div style="font-size:1.35rem;font-weight:800;color:var(--text);letter-spacing:-0.5px">{format_currency(m['final_cash'])}</div>
+                  <div style="font-size:0.85rem;color:var(--muted);font-weight:600">💵 Cash</div>
+                </div>
+                <div style="width:1px; height:40px; background:var(--border);"></div>
+                <div style="text-align:right;">
+                  <div style="font-size:1.35rem;font-weight:800;color:var(--text);letter-spacing:-0.5px">{m['final_btc']:.6f}</div>
+                  <div style="font-size:0.85rem;color:var(--muted);font-weight:600">₿ BTC</div>
+                </div>
               </div>
             </div>""", unsafe_allow_html=True)
+            
         with pc2:
             st.markdown(f"""
-            <div class="metric-card">
-              <div class="metric-label">₿ Sisa BTC</div>
-              <div style="font-size:1.15rem;font-weight:700;margin-top:0.35rem">
-                {m['final_btc']:.6f} BTC
-              </div>
-            </div>""", unsafe_allow_html=True)
-        with pc3:
-            st.markdown(f"""
             <div class="metric-card" style="border-left:4px solid {diff_color}">
-              <div class="metric-label">⚖️ Strategy vs HODL</div>
-              <div style="font-size:1.15rem;font-weight:700;margin-top:0.35rem;color:{diff_color}">
+              <div class="metric-label" style="text-transform:uppercase; font-size:0.75rem; letter-spacing:1px; color:var(--muted); margin-bottom:0.5rem;">STRATEGY VS HODL</div>
+              <div style="font-size:1.65rem;font-weight:800;margin:0.2rem 0;color:{diff_color};letter-spacing:-0.5px">
                 {diff_display}
               </div>
-              <div style="font-size:0.82rem;color:{diff_color};font-weight:600;margin-top:0.2rem">
+              <div style="font-size:0.85rem;color:{diff_color};font-weight:600;margin-top:0.3rem;">
                 {diff_label}
               </div>
             </div>""", unsafe_allow_html=True)
