@@ -12,7 +12,7 @@ from core.data_loader import load_master_dataset, fetch_cbbi_live, get_dataset_s
 from core.engine import run_backtest_full
 from core.charts import build_equity_chart, build_cbbi_chart  # both now Plotly
 from core.styles import inject_css
-from core.utils import format_percentage, format_currency
+from core.utils import format_percentage, format_currency, format_number
 from core.optimizer import load_live_params
 
 st.set_page_config(page_title="Simulator · CBBI Strategy Lab", page_icon="⚡", layout="wide")
@@ -430,7 +430,7 @@ with col_results:
                 </div>
                 <div style="width:1px; height:40px; background:var(--border);"></div>
                 <div style="text-align:right;">
-                  <div style="font-size:1.35rem;font-weight:800;color:var(--text);letter-spacing:-0.5px">{m['final_btc']:.6f}</div>
+                  <div style="font-size:1.35rem;font-weight:800;color:var(--text);letter-spacing:-0.5px">{format_number(m['final_btc'])}</div>
                   <div style="font-size:0.85rem;color:var(--muted);font-weight:600">₿ BTC</div>
                 </div>
               </div>

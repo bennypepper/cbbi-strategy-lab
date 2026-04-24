@@ -52,3 +52,26 @@ def format_currency(value: float) -> str:
     else:
         return f"{sign}${abs_v:,.2f}"
 
+
+def format_number(value: float, decimal_places: int = 6) -> str:
+    """
+    Format a general number smartly based on its magnitude.
+    Good for crypto amounts like BTC.
+    """
+    sign = "-" if value < 0 else ""
+    abs_v = abs(value)
+    
+    if abs_v >= 1e12:
+        return f"{sign}{abs_v/1e12:.2f}T"
+    elif abs_v >= 1e9:
+        return f"{sign}{abs_v/1e9:.2f}B"
+    elif abs_v >= 1e6:
+        return f"{sign}{abs_v/1e6:.2f}M"
+    elif abs_v >= 1e3:
+        return f"{sign}{abs_v:,.2f}K"
+    else:
+        # Avoid trailing zeros if it's an exact integer, otherwise show up to `decimal_places`
+        if abs_v.is_integer():
+            return f"{sign}{int(abs_v)}"
+        return f"{sign}{abs_v:,.{decimal_places}f}".rstrip('0').rstrip('.')
+
