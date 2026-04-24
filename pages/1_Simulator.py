@@ -333,27 +333,71 @@ with col_results:
             )
             st.markdown("")
 
-        # ── Metric cards ──────────────────────────────────────────────────────
-        mc1, mc2, mc3, mc4 = st.columns(4)
-
-        def _fmt_pct(v):  return format_percentage(v * 100)
+        # ── Helper formatters ─────────────────────────────────────────────────
+        def _fmt_pct(v):    return format_percentage(v * 100)
         def _fmt_signed(v): return f"{v:+.2f}"
 
+        final_pv    = m["final_portfolio_value"]
+        final_bh    = bm["final_value"]
+        diff_usd    = final_pv - final_bh
+        outperforms = diff_usd >= 0
+        diff_color  = "#0a7c6e" if outperforms else "#dc2626"
+        diff_label  = "Strategy outperforms 🏆" if outperforms else "Strategy underperforms ⚠️"
+        diff_abs    = abs(diff_usd)
+        diff_prefix = "+" if outperforms else "-"
+        diff_display = f"{diff_prefix}{format_currency(diff_abs)}"
+
+        # ── Row 1: Hero cards — Portfolio Akhir vs HODL ───────────────────────
+        hero1, hero2 = st.columns(2)
+        with hero1:
+            st.markdown(f"""
+            <div class="metric-card" style="border-left:4px solid #0a7c6e">
+              <div class="metric-label">💼 Portfolio Akhir</div>
+              <div style="font-size:1.65rem;font-weight:800;margin:0.35rem 0;letter-spacing:-0.5px">
+                {format_currency(final_pv)}
+              </div>
+              <div style="font-size:1rem;color:#0a7c6e;font-weight:700">
+                {_fmt_pct(m['total_return'])}
+              </div>
+            </div>""", unsafe_allow_html=True)
+        with hero2:
+            st.markdown(f"""
+            <div class="metric-card" style="border-left:4px solid #0369a1">
+              <div class="metric-label">📦 HODL Comparison</div>
+              <div style="font-size:1.65rem;font-weight:800;margin:0.35rem 0;letter-spacing:-0.5px">
+                {format_currency(final_bh)}
+              </div>
+              <div style="font-size:1rem;color:#0369a1;font-weight:700">
+                {_fmt_pct(bm['total_return'])}
+              </div>
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown("")
+
+        # ── Row 2: Core metric cards ──────────────────────────────────────────
+        mc1, mc2, mc3, mc4 = st.columns(4)
         with mc1:
-            bh_r = bm["total_return"]
             st.metric(
-                "Total Return",
-                _fmt_pct(m["total_return"]),
-                delta=f"B&H: {_fmt_pct(bh_r)}",
+                "Max Drawdown",
+                _fmt_pct(-m["max_drawdown"]),
+                delta=m.get("max_drawdown_date", ""),
                 delta_color="off",
+                help="Date when the largest peak-to-trough decline occurred.",
             )
         with mc2:
-            st.metric("Max Drawdown", _fmt_pct(-m["max_drawdown"]))
-        with mc3:
             st.metric(
                 "Sharpe Ratio",
                 f"{m['sharpe_ratio']:.2f}",
                 delta=f"B&H: {bm['sharpe_ratio']:.2f}",
+                delta_color="off",
+            )
+        with mc3:
+            buys  = m.get("buy_count", 0)
+            sells = m.get("sell_count", 0)
+            st.metric(
+                "Total Trades",
+                str(m["trade_count"]),
+                delta=f"🟢 {buys} Buys  🔴 {sells} Sells",
                 delta_color="off",
             )
         with mc4:
@@ -361,18 +405,49 @@ with col_results:
             st.metric(
                 "Win Rate",
                 f"{wr_pct:.1f}%",
-                delta=f"{m['trade_count']} trades",
+                delta=f"{sells} SELL trades evaluated",
                 delta_color="off",
                 help="Win rate = % of SELL trades that were profitable vs avg entry price.",
             )
 
         st.markdown("")
 
-        # Equity curve (Plotly — log scale, smooth spline, filled area)
+        # ── Row 3: Portfolio composition + vs HODL ────────────────────────────
+        pc1, pc2, pc3 = st.columns(3)
+        with pc1:
+            st.markdown(f"""
+            <div class="metric-card">
+              <div class="metric-label">💵 Sisa Cash</div>
+              <div style="font-size:1.15rem;font-weight:700;margin-top:0.35rem">
+                {format_currency(m['final_cash'])}
+              </div>
+            </div>""", unsafe_allow_html=True)
+        with pc2:
+            st.markdown(f"""
+            <div class="metric-card">
+              <div class="metric-label">₿ Sisa BTC</div>
+              <div style="font-size:1.15rem;font-weight:700;margin-top:0.35rem">
+                {m['final_btc']:.6f} BTC
+              </div>
+            </div>""", unsafe_allow_html=True)
+        with pc3:
+            st.markdown(f"""
+            <div class="metric-card" style="border-left:4px solid {diff_color}">
+              <div class="metric-label">⚖️ Strategy vs HODL</div>
+              <div style="font-size:1.15rem;font-weight:700;margin-top:0.35rem;color:{diff_color}">
+                {diff_display}
+              </div>
+              <div style="font-size:0.82rem;color:{diff_color};font-weight:600;margin-top:0.2rem">
+                {diff_label}
+              </div>
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown("")
+
+        # ── Charts ────────────────────────────────────────────────────────────
         chart_equity = build_equity_chart(result)
         st.plotly_chart(chart_equity, width='stretch')
 
-        # Trolololo signal chart (Plotly — smooth spline, filled zones)
         chart_cbbi = build_cbbi_chart(
             df_slice,
             threshold_buy=params["threshold_buy"],
@@ -383,13 +458,15 @@ with col_results:
 
         # ── Auto-generated summary text ───────────────────────────────────────
         period_yrs = (pd.Timestamp(end_date) - pd.Timestamp(start_date)).days / 365
+        buys  = m.get("buy_count", 0)
+        sells = m.get("sell_count", 0)
         st.info(
-            f"**Summary:** With a Buy Threshold of **{threshold_buy}** and Sell Threshold of "
-            f"**{threshold_sell}**, your strategy generated a **{format_percentage(m['total_return']*100)} total return** "
-            f"over {period_yrs:.1f} years, compared to Buy & Hold at **{format_percentage(bh_r*100)}** "
-            f"over the same period. "
-            f"The strategy completed **{m['trade_count']}** trades "
-            f"with a win rate of **{m['win_rate']*100:.1f}%** "
+            f"**Summary:** Dengan Buy Threshold **{threshold_buy}** dan Sell Threshold **{threshold_sell}**, "
+            f"strategi menghasilkan **{format_percentage(m['total_return']*100)} total return** "
+            f"selama {period_yrs:.1f} tahun, dibanding HODL **{format_percentage(bm['total_return']*100)}**. "
+            f"Total **{m['trade_count']} transaksi** (🟢 {buys} beli · 🔴 {sells} jual) "
+            f"dengan win rate **{m['win_rate']*100:.1f}%**. "
+            f"Portofolio akhir: **{format_currency(final_pv)}** vs HODL **{format_currency(final_bh)}** — {diff_label}."
         )
 
 # ═══════════════════════════════════════════════════════════════════════════════

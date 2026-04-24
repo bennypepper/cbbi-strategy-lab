@@ -276,6 +276,7 @@ def run_backtest_full(
     total_return = (pv[-1] - initial_cash) / initial_cash
 
     max_drawdown = 0.0
+    max_drawdown_idx = 0
     peak = pv[0]
     for i in range(n):
         if pv[i] > peak:
@@ -283,6 +284,10 @@ def run_backtest_full(
         dd = (peak - pv[i]) / peak if peak > 0 else 0.0
         if dd > max_drawdown:
             max_drawdown = dd
+            max_drawdown_idx = i
+
+    max_drawdown_date = str(dates[max_drawdown_idx].date())
+    buy_count = trade_count - sell_count
 
     mean_ret = float(np.mean(dr))
     std_ret  = float(np.std(dr))
@@ -338,16 +343,23 @@ def run_backtest_full(
         portfolio_history=portfolio_history,
         trade_log=trade_log,
         metrics={
-            "total_return":  total_return,
-            "max_drawdown":  max_drawdown,
-            "sharpe_ratio":  sharpe_ratio,
-            "win_rate":      win_rate,
-            "trade_count":   trade_count,
+            "total_return":          total_return,
+            "max_drawdown":          max_drawdown,
+            "max_drawdown_date":     max_drawdown_date,
+            "sharpe_ratio":          sharpe_ratio,
+            "win_rate":              win_rate,
+            "trade_count":           trade_count,
+            "buy_count":             buy_count,
+            "sell_count":            sell_count,
+            "final_cash":            float(cash_arr[-1]),
+            "final_btc":             float(btc_arr[-1]),
+            "final_portfolio_value": float(pv[-1]),
         },
         benchmark_metrics={
             "total_return": bh_return,
             "max_drawdown": bh_mdd,
             "sharpe_ratio": bh_sharpe,
+            "final_value":  float(bh_values[-1]),
         },
         low_sample_warning=(trade_count < 10),
         params={
