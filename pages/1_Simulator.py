@@ -205,12 +205,14 @@ with col_input:
     hold_pct = sell_pct - buy_pct
     
     gradient_html = f"""
-    <div style="position: relative; margin: 0.5rem 0 1rem; padding: 12px; background: white; border: 2px solid #c9c2b8; box-shadow: 4px 4px 0px 0px rgba(33,52,72,0.1);">
-        <div title="Visual representation of the Buy, Hold, and Sell zones based on your selected thresholds." style="position: absolute; right: 8px; top: 8px; width: 16px; height: 16px; border-radius: 50%; border: 1px solid #94a3b8; color: #64748b; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: help;">?</div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px;">
-            <span style="color: #16a34a;">Buy Zone (&le;{threshold_buy})</span>
-            <span style="color: #64748b;">Hold Zone ({hold_pct} pts)</span>
-            <span style="color: #dc2626;">Sell Zone (&ge;{threshold_sell})</span>
+    <div style="margin: 0.5rem 0 1rem; padding: 12px; background: white; border: 2px solid #c9c2b8; box-shadow: 4px 4px 0px 0px rgba(33,52,72,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px;">
+            <span style="color: #16a34a; flex: 1;">Buy Zone (&le;{threshold_buy})</span>
+            <span style="color: #64748b; flex: 1; text-align: center;">Hold Zone ({hold_pct} pts)</span>
+            <span style="color: #dc2626; flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 6px;">
+                Sell Zone (&ge;{threshold_sell})
+                <div title="Visual representation of the Buy, Hold, and Sell zones based on your selected thresholds." style="width: 16px; height: 16px; border-radius: 50%; border: 1px solid #94a3b8; color: #64748b; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: help;">?</div>
+            </span>
         </div>
         <div style="display: flex; height: 16px; width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,0,0,0.1);">
             <div style="width: {buy_pct}%; background: linear-gradient(90deg, #22c55e, #16a34a);"></div>
