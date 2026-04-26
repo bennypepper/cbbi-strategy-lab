@@ -146,7 +146,7 @@ with col_input:
     # Load optimal params for standard scenario (exactly like CLI)
     if obj_key is not None and obj_key != "__live__":
         opt = _load_scenario_params(research, obj_key)
-    else:
+    elif obj_key is None:
         opt = dict(threshold_buy=20, threshold_sell=75, alloc_buy=10, alloc_sell=10)
 
     # Research info callout — mirrors CLI "INFORMASI RISET" block
