@@ -132,13 +132,13 @@ def _yaxis_linear(title: str | None = None) -> dict:
 
 def _legend_top() -> dict:
     return dict(
-        orientation="h", x=0, y=1.08,
+        orientation="h", x=0, y=1.02, yanchor="bottom",
         bgcolor="rgba(0,0,0,0)", bordercolor="rgba(0,0,0,0)", borderwidth=0,
         font=dict(size=11, family=_FONT, color=_TEXT),
     )
 
 
-def _base_layout(title: str, height: int, extra_margin_t: int = 60) -> dict:
+def _base_layout(title: str, height: int, extra_margin_t: int = 80) -> dict:
     return dict(
         paper_bgcolor=_PAPER,
         plot_bgcolor=_PLOT,
@@ -147,7 +147,8 @@ def _base_layout(title: str, height: int, extra_margin_t: int = 60) -> dict:
             text=title,
             font=dict(size=14, color=_TEXT, family=_FONT),
             x=0.0, xanchor="left",
-            pad=dict(l=0, t=4),
+            y=1.12, yanchor="bottom",
+            pad=dict(l=0, t=0),
         ),
         height=height,
         hovermode="x unified",
@@ -198,8 +199,6 @@ def build_equity_chart(result: SimulationResult) -> go.Figure:
     tlog = result.trade_log.copy()
     if not tlog.empty:
         tlog["Date"] = pd.to_datetime(tlog["Date"])
-        # Only first trade in each consecutive same-action run (denoised markers)
-        tlog = tlog.loc[tlog["Action"] != tlog["Action"].shift()].copy()
 
     fig = go.Figure()
 
@@ -237,12 +236,14 @@ def build_equity_chart(result: SimulationResult) -> go.Figure:
         # Map trade dates to nearest weekly portfolio value
         ph_w_idx = ph_w["portfolio_value"]
 
-        buys  = tlog[tlog["Action"] == "BUY"].copy()
-        sells = tlog[tlog["Action"] == "SELL"].copy()
+        tlog_first = tlog.loc[tlog["Action"] != tlog["Action"].shift()].copy()
+        tlog_rest = tlog.loc[tlog["Action"] == tlog["Action"].shift()].copy()
 
-        for trades, symbol, color, label in [
-            (buys,  "triangle-up",   COLORS["buy_marker"],  "Buy"),
-            (sells, "triangle-down", COLORS["sell_marker"], "Sell"),
+        for trades, symbol, color, label, visible in [
+            (tlog_first[tlog_first["Action"] == "BUY"],  "triangle-up",   COLORS["buy_marker"],  "Buy", True),
+            (tlog_first[tlog_first["Action"] == "SELL"], "triangle-down", COLORS["sell_marker"], "Sell", True),
+            (tlog_rest[tlog_rest["Action"] == "BUY"],    "circle",        COLORS["buy_marker"],  "Subsequent Buys", "legendonly"),
+            (tlog_rest[tlog_rest["Action"] == "SELL"],   "circle",        COLORS["sell_marker"], "Subsequent Sells", "legendonly"),
         ]:
             if trades.empty:
                 continue
@@ -255,9 +256,10 @@ def build_equity_chart(result: SimulationResult) -> go.Figure:
                 x=trades["Date"], y=trades["value"],
                 name=label,
                 mode="markers",
+                visible=visible,
                 marker=dict(
                     symbol=symbol, color=color,
-                    size=6, opacity=0.85,
+                    size=6 if visible is True else 4, opacity=0.85 if visible is True else 0.5,
                     line=dict(width=0),
                 ),
                 hovertemplate=(
@@ -383,24 +385,29 @@ def build_cbbi_chart(
     if trade_log is not None and not trade_log.empty:
         tlog = trade_log.copy()
         tlog["Date"] = pd.to_datetime(tlog["Date"])
-        tlog = tlog.loc[tlog["Action"] != tlog["Action"].shift()].copy()
+        
+        tlog_first = tlog.loc[tlog["Action"] != tlog["Action"].shift()].copy()
+        tlog_rest = tlog.loc[tlog["Action"] == tlog["Action"].shift()].copy()
 
         sig_idx = sig_df.set_index("date")["signal"]
 
-        for action, symbol, color, label in [
-            ("BUY",  "triangle-up",   COLORS["buy_marker"],  "Buy Signal"),
-            ("SELL", "triangle-down", COLORS["sell_marker"], "Sell Signal"),
+        for subset, symbol, color, label, visible in [
+            (tlog_first[tlog_first["Action"] == "BUY"],  "triangle-up",   COLORS["buy_marker"],  "Buy Signal", True),
+            (tlog_first[tlog_first["Action"] == "SELL"], "triangle-down", COLORS["sell_marker"], "Sell Signal", True),
+            (tlog_rest[tlog_rest["Action"] == "BUY"],    "circle",        COLORS["buy_marker"],  "Subsequent Buys", "legendonly"),
+            (tlog_rest[tlog_rest["Action"] == "SELL"],   "circle",        COLORS["sell_marker"], "Subsequent Sells", "legendonly"),
         ]:
-            subset = tlog[tlog["Action"] == action].copy()
             if subset.empty:
                 continue
+            subset = subset.copy()
             subset["signal"] = sig_idx.reindex(subset["Date"], method="nearest").values
             fig.add_trace(go.Scatter(
                 x=subset["Date"], y=subset["signal"],
                 name=label, mode="markers",
+                visible=visible,
                 marker=dict(
                     symbol=symbol, color=color,
-                    size=6, opacity=0.85,
+                    size=6 if visible is True else 4, opacity=0.85 if visible is True else 0.5,
                     line=dict(width=0),
                 ),
                 hovertemplate=(
@@ -439,6 +446,7 @@ def _research_layout(fig: go.Figure, title: str, height: int) -> go.Figure:
             text=title,
             font=dict(size=14, color=_TEXT, family=_FONT),
             x=0.02,
+            y=1.12, yanchor="bottom",
         ),
         height=height,
         hovermode="x unified",
@@ -448,7 +456,7 @@ def _research_layout(fig: go.Figure, title: str, height: int) -> go.Figure:
             font=dict(color=_TEXT, size=11, family=_FONT),
         ),
         legend=_legend_top(),
-        margin=dict(l=70, r=24, t=60, b=44),
+        margin=dict(l=70, r=24, t=80, b=44),
         xaxis=dict(
             showgrid=True, gridcolor=_GRID,
             zeroline=False, showline=False,
