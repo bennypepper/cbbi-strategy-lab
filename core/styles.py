@@ -24,7 +24,7 @@ _GLOBAL_CSS = """
     font-family: 'Work Sans', sans-serif;
     letter-spacing: -0.01em;
   }
-  .block-container { padding-top: 2rem; padding-bottom: 3rem; max-width: 100%; }
+  .block-container { padding-top: 4rem; padding-bottom: 3rem; max-width: 100%; }
 
   /* ── Typography hierarchy ── */
   h1, h2, h3, h4 {
