@@ -138,7 +138,7 @@ def _legend_top() -> dict:
     )
 
 
-def _base_layout(title: str, height: int, extra_margin_t: int = 80) -> dict:
+def _base_layout(title: str, height: int, extra_margin_t: int = 100) -> dict:
     return dict(
         paper_bgcolor=_PAPER,
         plot_bgcolor=_PLOT,
@@ -418,8 +418,8 @@ def build_cbbi_chart(
 
     layout = _base_layout(
         f"Trolololo Index with Signals  —  Buy ≤ {threshold_buy}  |  Sell ≥ {threshold_sell}",
-        height=300,
-        extra_margin_t=70,
+        height=320,
+        extra_margin_t=100,
     )
     layout["xaxis"] = _xaxis()
     layout["yaxis"] = dict(
@@ -454,7 +454,7 @@ def _research_layout(fig: go.Figure, title: str, height: int) -> go.Figure:
             font=dict(color=_TEXT, size=11, family=_FONT),
         ),
         legend=_legend_top(),
-        margin=dict(l=70, r=24, t=80, b=44),
+        margin=dict(l=70, r=24, t=100, b=44),
         xaxis=dict(
             showgrid=True, gridcolor=_GRID,
             zeroline=False, showline=False,
