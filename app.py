@@ -12,7 +12,7 @@ Responsibilities:
 
 import streamlit as st
 
-from core.data_loader import load_master_dataset, load_research_results, fetch_cbbi_live
+from core.data_loader import load_master_dataset, load_research_results, fetch_live_dataset
 from core.engine import warmup_numba
 from core.styles import inject_css, ICON_ZAP, ICON_CHART_BARS, ICON_BOOK
 from core.utils import format_percentage, format_currency
@@ -52,7 +52,7 @@ def _preload_data():
     load_master_dataset()
     load_research_results()
     try:
-        fetch_cbbi_live()
+        fetch_live_dataset()
     except Exception:
         pass
     return True
@@ -84,7 +84,7 @@ st.markdown(
 # ── Dynamic Stats Cards ───────────────────────────────────────────────────────
 df_hist = load_master_dataset()
 try:
-    df_live = fetch_cbbi_live()
+    df_live = fetch_live_dataset()
     latest_date = df_live.index.max()
     latest_row = df_live.loc[latest_date]
     is_live = True
@@ -95,7 +95,7 @@ except Exception:
     is_live = False
 
 latest_cbbi = float(latest_row['trolololo'])
-latest_price = float(latest_row['btc_open'])
+latest_price = float(latest_row.get('btc_open', latest_row.get('btc_close', 0.0)))
 total_days = len(df_live)
 min_date = str(df_live.index.min().date())
 
@@ -267,8 +267,8 @@ with col_b:
         st.markdown(
             f"""
             <div class="info-strip" style="background:#edf4f7; border-left:4px solid #0a7c6e; padding:1rem; border-radius:0; color:#213448; font-family:'Work Sans', sans-serif;">
-            <span style="color:#0a7c6e;font-weight:700;">&#128308; Live API Connected</span> &mdash; Using latest data up to <b>{max_d}</b>.<br>
-            App fetches daily updates directly from colintalkscrypto.com endpoints.
+            <span style="color:#0a7c6e;font-weight:700;">&#128308; Live Data Connected</span> &mdash; Using latest data up to <b>{max_d}</b>.<br>
+            Trolololo is computed independently from Yahoo Finance BTC prices via logarithmic regression.
             </div>
             """,
             unsafe_allow_html=True,
