@@ -3,6 +3,13 @@ core/data_loader.py
 ===================
 Data loading helpers with Streamlit cache decorators.
 All paths are relative to the repo root (data/).
+
+Methodology update (2026-04-27):
+  fetch_cbbi_live() has been replaced with fetch_live_dataset().
+  Live data is now sourced entirely from yfinance BTC-USD prices.
+  The Trolololo indicator is computed independently via compute_trolololo()
+  (core/trolololo.py), eliminating dependency on the CBBI API and
+  Index Revision Bias.
 """
 
 from __future__ import annotations
@@ -12,7 +19,9 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-import requests
+import yfinance as yf
+
+from core.trolololo import compute_trolololo
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 _ROOT = Path(__file__).resolve().parents[1]
@@ -37,39 +46,47 @@ def load_master_dataset() -> pd.DataFrame:
     return df
 
 
-@st.cache_data(ttl=3600, show_spinner="Fetching Live CBBI Data...")
-def fetch_cbbi_live() -> pd.DataFrame:
+@st.cache_data(ttl=3600, show_spinner="Fetching live BTC data...")
+def fetch_live_dataset() -> pd.DataFrame:
     """
-    Fetch the latest CBBI data from colintalkscrypto API once per hour.
-    Returns a DataFrame formatted exactly like the master_dataset.
+    Fetch current BTC-USD prices from Yahoo Finance and compute Trolololo
+    independently using logarithmic regression (core/trolololo.py).
+
+    No dependency on the CBBI API. Eliminates Index Revision Bias.
+    Cached for 1 hour (ttl=3600).
+
+    Returns a DataFrame with DatetimeIndex and at minimum:
+      - btc_close  : BTC daily close price
+      - btc_open   : BTC daily open price (same as close for live rows)
+      - trolololo  : independently computed Trolololo [0-100]
     """
-    url = "https://colintalkscrypto.com/cbbi/data/latest.json"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Referer": "https://colintalkscrypto.com/cbbi/"
-    }
-    r = requests.get(url, headers=headers, timeout=10)
-    r.raise_for_status()
-    data = r.json()
-    
-    # The API returns dictionary objects where the keys are Unix timestamps.
-    # Convert 'Price' -> 'btc_open', 'Confidence' -> 'trolololo'
-    # Colin's 'Confidence' is the CBBI index score (which we call trolololo in our dataset)
-    price_series = pd.Series(data.get("Price", {}), name="btc_open")
-    cbbi_series = pd.Series(data.get("Confidence", {}), name="trolololo") * 100.0
-    
-    # Combine them
-    df = pd.concat([price_series, cbbi_series], axis=1)
-    
-    # The index is string unix timestamps, we must convert it to DatetimeIndex
-    df.index = pd.to_datetime(df.index.astype(int), unit='s')
-    
-    # Filter to match our standard starting point of 2012 generally or keep all
-    df = df.sort_index()
-    df["btc_close"] = df["btc_open"]
+    raw = yf.download("BTC-USD", start="2012-01-01", auto_adjust=True, progress=False)
+    if raw.empty:
+        raise RuntimeError("yfinance returned no data for BTC-USD.")
+
+    # Flatten MultiIndex columns if present (yfinance >= 0.2.x)
+    if isinstance(raw.columns, pd.MultiIndex):
+        raw.columns = raw.columns.get_level_values(0)
+
+    # Ensure timezone-naive DatetimeIndex
+    raw.index = pd.to_datetime(raw.index).tz_localize(None)
+    raw = raw.sort_index()
+
+    df = pd.DataFrame(index=raw.index)
+    df["btc_close"] = raw["Close"].squeeze()
+    df["btc_open"]  = raw["Open"].squeeze()
+
+    # Compute Trolololo independently from BTC close prices
+    df["trolololo"] = compute_trolololo(df["btc_close"].dropna().reindex(df.index))
+
+    df = df.dropna(subset=["btc_close"])
     return df
+
+
+# Backward-compatibility alias — remove after all callers are updated
+def fetch_cbbi_live() -> pd.DataFrame:
+    """Deprecated: use fetch_live_dataset() instead."""
+    return fetch_live_dataset()
 
 
 

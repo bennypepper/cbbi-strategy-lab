@@ -1,11 +1,12 @@
 """
 pages/4_Optimizer.py
 ====================
-Dynamic Grid Search Optimizer — Live CBBI Parameter Updater.
+Dynamic Grid Search Optimizer — Live Parameter Updater.
 
-This page runs a Numba-accelerated grid search over the live CBBI API data
-to find optimal strategy parameters that reflect the *current* state of
-Colin's ever-evolving index formula.
+This page runs a Numba-accelerated grid search over live BTC price data
+(fetched from Yahoo Finance) with Trolololo computed independently via
+logarithmic regression. This eliminates dependence on the CBBI API and
+resolves the "Index Revision Bias" documented in our research limitations.
 
 Academic context
 ----------------
@@ -13,8 +14,8 @@ The core research (the core research repository) was conducted on a frozen snaps
 That snapshot is permanently fixed — changing it would compromise reproducibility.
 
 This optimizer is a practical DEPLOYMENT extension: it finds parameters that
-actually work in production against today's live CBBI values, addressing the
-"Index Revision Bias" documented in our research limitations section.
+actually work in production against today's fresh data, using the same
+deterministic Trolololo formula as the research snapshot.
 
 See: Research Results → Research Notes → Limitation: Index Recalculation Risk
 """
@@ -29,7 +30,7 @@ import streamlit as st
 import pandas as pd
 
 from core.styles import inject_css
-from core.data_loader import fetch_cbbi_live
+from core.data_loader import fetch_live_dataset
 from core.optimizer import (
     run_live_optimization,
     load_live_params,
@@ -77,9 +78,9 @@ st.markdown("""
     ⚙️ Dynamic Parameter Optimizer
   </h1>
   <p style="font-size:0.95rem;color:var(--muted);max-width:660px;margin:0">
-    Re-optimize strategy parameters against the <strong>current live CBBI formula</strong>.
-    Colin's CBBI retroactively recalculates historical scores when he updates the index —
-    this tool ensures your deployment parameters stay aligned with the live data reality.
+    Re-optimize strategy parameters against <strong>fresh live BTC price data</strong>
+    (Yahoo Finance) with Trolololo computed via independent logarithmic regression.
+    No reliance on the CBBI API — signal values are deterministic and reproducible.
   </p>
 </div>
 """, unsafe_allow_html=True)
@@ -211,9 +212,10 @@ st.markdown(
     <div style="background:var(--bg-card);border:1.5px solid var(--border);
                 border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;
                 font-size:0.88rem;color:var(--muted)">
-      This will fetch the latest data from the <strong>Live CBBI API</strong>, then run
+      This will fetch the latest BTC price data from <strong>Yahoo Finance</strong>,
+      compute Trolololo via logarithmic regression, then run
       <strong>{n_combos:,} parallel backtests</strong> using Numba JIT compilation.
-      Typical runtime: <strong>5–20 seconds</strong> depending on your CPU.
+      Typical runtime: <strong>5&ndash;20 seconds</strong> depending on your CPU.
     </div>""",
     unsafe_allow_html=True,
 )
@@ -230,8 +232,8 @@ if run_btn:
 
     try:
         # Step 1: Fetch live data
-        _progress(0.01, "Fetching live CBBI data…")
-        df_live = fetch_cbbi_live()
+        _progress(0.01, "Fetching live BTC price data from Yahoo Finance...")
+        df_live = fetch_live_dataset()
 
         # Step 2: Warm up Numba (first run only — compiles JIT kernels)
         _progress(0.04, "Warming up Numba JIT compiler (first run only)…")
@@ -283,7 +285,7 @@ After running the optimizer:
 
 # ── Index revision bias explainer ─────────────────────────────────────────────
 
-with st.expander("📚 Why re-optimization is needed — Index Revision Bias explained"):
+with st.expander("📚 Why independent Trolololo calculation was chosen"):
     st.markdown("""
     **Colin's CBBI is not static.** When he adds, removes, or modifies an indicator
     (e.g., removing Stock-to-Flow, reweighting Pi Cycle), his algorithm retroactively
@@ -291,16 +293,19 @@ with st.expander("📚 Why re-optimization is needed — Index Revision Bias exp
 
     This means:
     - The score for `2021-01-01` in our frozen `master_dataset.parquet` is **63.65**
-    - The score for the exact same date via the live API today is **78.13**
+    - The same date via the live CBBI API (2026-04-17) was **78.13**
 
     **A 14.5-point drift on one day.** Across thousands of days, this shifts when
     every single buy/sell signal fires.
 
-    Parameters optimized against the frozen snapshot (Buy 35 / Sell 55) are tuned
-    for a formula that no longer exists in the live API. They will underperform.
+    **The solution:** Instead of fetching from the CBBI API, the Trolololo indicator
+    is computed **independently** from BTC price data using a power-law logarithmic
+    regression model (`core/trolololo.py`). This formula is deterministic — it
+    produces the same value for any given BTC price history, regardless of what
+    Colin changes in his index.
 
-    **This optimizer solves that** by re-running the search against the formula that
-    *actually exists today*.
+    The research snapshot (frozen) used this same formula. So the live optimizer
+    is now consistent with the academic research by design.
 
     ---
     *For the academic research paper*, this phenomenon is documented as a limitation

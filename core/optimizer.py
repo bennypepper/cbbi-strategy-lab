@@ -320,7 +320,7 @@ def run_live_optimization(
         status="success",
         total_combinations=n_combos,
         elapsed_seconds=round(elapsed, 2),
-        data_source="live_cbbi_api",
+        data_source="live_yfinance_independent",
         data_date_range=f"{date_min} → {date_max}",
         max_return=best_return,
         max_sharpe=best_sharpe,
