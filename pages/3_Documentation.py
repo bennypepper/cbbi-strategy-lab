@@ -190,10 +190,11 @@ with tab4:
 This application presents results from a 4-phase academic research project.
 
 #### Phase 1 — Data Pipeline
-- Source 1: CBBI official dataset (XLSX from cbbi.info) — all 9 indicators + composite score
-- Source 2: BTC daily Open prices from yfinance (`BTC-USD`)
+- **Source 1:** CBBI official dataset (XLSX from cbbi.info) — 8 on-chain indicators + composite score
+- **Source 2:** BTC-USD daily prices from yfinance (`BTC-USD`) — used for `btc_open` (T+1 execution) and `btc_close`
+- **Trolololo *(Updated 2026-04-27)*:** `trolololo` is **not** sourced from the CBBI XLSX. It is computed independently from `btc_close` using a logarithmic regression power-law model (`core/trolololo.py`). This eliminates *Index Revision Bias* — the risk that retroactive CBBI formula updates silently shift historical signal values. Calibrated to match professor's reference value of ~26.7 as of 2026-04-27.
 - Preprocessing: string parsing → float64, forward fill ≤ 7 days, date alignment
-- Final dataset: 2012-01-01 to 2026-03-31 (~5,200 trading days)
+- Static dataset snapshot: 2012-01-01 to 2026-03-15 (5,161 trading days)
 - Validation: `validate_no_lookahead()` confirmed no backward fill was applied
 
 #### Phase 2 — Indicator Selection
@@ -272,8 +273,7 @@ period. The CBBI Trolololo indicator spent extended periods in the "hold zone," 
 fewer trades than during In-Sample. This is a feature of the market cycle, not a system failure.
 
 **3. Data Recency**  
-Data is frozen at 2026-03-31. The application does not update with live prices.
-Results do not reflect market conditions after this date.
+The static historical dataset snapshot is frozen at **2026-03-15**. The **Live Data mode** (sidebar toggle in the Simulator) fetches current BTC prices from Yahoo Finance and computes Trolololo independently in real time, allowing simulation up to the present date. However, the CBBI sub-indicator columns (pi_cycle, rupl, etc.) in the live dataset reflect the static snapshot values only — these are not updated from the CBBI API.
 
 **4. Execution Assumptions**  
 The backtest assumes:
