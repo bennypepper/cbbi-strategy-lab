@@ -42,7 +42,7 @@ to a scale of **0 to 100**, and CBBI blends them into a single Confidence Score.
 > **0 = Deep bear market / accumulation zone**  
 > **100 = Peak euphoria / distribution zone**
 
-Data source: [cbbi.info](https://cbbi.info) · Dataset: 2012-01-01 to 2026-03-31
+Data source: [cbbi.info](https://cbbi.info) · Dataset: 2012-01-01 to 2026-03-15
 
 ---
 
@@ -221,7 +221,7 @@ This application presents results from a 4-phase academic research project.
 
 #### In-Sample vs Out-of-Sample
 - **In-Sample (IS)**: 2012-01-01 – 2020-12-31 — data used for optimization
-- **Out-of-Sample (OOS)**: 2021-01-01 – 2026-03-31 — data held back for validation
+- **Out-of-Sample (OOS)**: 2021-01-01 – 2026-03-15 — data held back for validation
 
 OOS performance is the honest benchmark of how the optimized strategy would have performed
 on data it never "saw" during training. Significant performance degradation from IS to OOS
@@ -287,14 +287,19 @@ Despite the IS/OOS split, Grid Search with 1.29M combinations on a finite datase
 may still select parameters that are overfit to historical noise patterns.
 The OOS forward test provides evidence of generalizability, but is not proof of robustness.
 
+**6. Index Revision Bias**  
+The CBBI Confidence Score and its sub-indicators are periodically revised retroactively by the author when the formula changes (e.g., removal of Stock-to-Flow). Empirical evidence: the same historical date (2021-01-01) showed a **+14.48 point drift** between the research snapshot (63.65) and the live API value (78.13) as of April 17, 2026. The Trolololo signal in this app is computed independently from BTC-USD prices to eliminate this bias for that indicator. However, the remaining 8 indicators loaded from the CBBI XLSX snapshot may still be subject to future drift if the CBBI formula is updated again.
+
 ---
 
 ### Data Sources
 
 | Source | Data | Coverage |
 |---|---|---|
-| [CBBI Official (cbbi.info)](https://cbbi.info) | 9 sub-indicators + Confidence Score | 2011-06-27 – 2026-03-15 |
-| Yahoo Finance (via yfinance) | BTC-USD daily Open price | 2012-01-01 – 2026-03-31 |
+| [CBBI Official (cbbi.info)](https://cbbi.info) | 8 on-chain indicators + Confidence Score (from XLSX) | 2011-06-27 – 2026-03-15 |
+| Yahoo Finance (via yfinance) | BTC-USD daily Close & Open prices + independent Trolololo computation | 2012-01-01 – 2026-03-15 (static snapshot); live mode extends to present |
+
+> **Note on Trolololo:** The Trolololo (Logarithmic Regression) indicator is **computed independently** from BTC-USD close prices — it is not read from the CBBI XLSX. This eliminates *Index Revision Bias* caused by retroactive formula updates on cbbi.info.
 
 This application is not affiliated with, endorsed by, or connected to CBBI, cbbi.info,
 Cole Garner, Yahoo Finance, or any cryptocurrency exchange.

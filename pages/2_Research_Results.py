@@ -131,7 +131,20 @@ def _render_scenario1_tab(obj_key: str):
         st.metric("Sharpe Ratio",  f"{oos_data['sharpe_ratio']:.3f}")
         st.metric("Win Rate",      f"{oos_data['win_rate'] * 100:.1f}%")
         st.metric("Trade Count",   f"{int(oos_data['trade_count']):,}")
-        if oos_data["trade_count"] < 10:
+        if oos_data["trade_count"] == 0:
+            st.markdown(
+                "<div style='background:rgba(10,124,110,0.08); border-left:4px solid #0a7c6e; padding:0.85rem 1rem; margin-top:0.5rem; font-size:0.84rem; line-height:1.6;'>"
+                "<b>📊 No OOS trades triggered — expected with independent Trolololo</b><br>"
+                f"The optimal buy threshold is <b>{int(is_data['threshold_buy'])}</b> (Trolololo ≤ {int(is_data['threshold_buy'])}%). "
+                "With the independently computed Trolololo (log regression on BTC-USD prices, re-calibrated 2026-04-27), "
+                "the signal never fell below this threshold during the OOS period (2021–2026). "
+                "No buy signals means no sell signals, so all metrics show 0. "
+                "This is a research finding — the Min Drawdown strategy's extreme selectivity prevents any activity "
+                "in the bull/sideways market conditions of 2021–2026."
+                "</div>",
+                unsafe_allow_html=True,
+            )
+        elif oos_data["trade_count"] < 10:
             st.markdown("<div class='warn-badge'>⚠ Low trade count</div>", unsafe_allow_html=True)
 
     with mc3:
