@@ -85,8 +85,10 @@ else:
     df_full = load_master_dataset()
 
 research = load_research_results()
-DATA_MIN = df_full.index.min().date()
-DATA_MAX = df_full.index.max().date()
+# Use .to_pydatetime().date() to guarantee pure Python datetime.date objects
+# (avoids pandas Timestamp type comparison issues in Python 3.14 + newer Streamlit)
+DATA_MIN = df_full.index.min().to_pydatetime().date()
+DATA_MAX = df_full.index.max().to_pydatetime().date()
 
 # ── Page header ───────────────────────────────────────────────────────────────
 st.markdown("## ⚡ Strategy Simulator")
@@ -243,8 +245,13 @@ with col_input:
     # Date range
     st.markdown("**📅 Simulation Period**")
     col_d1, col_d2 = st.columns(2)
+    # Clamp start_default to DATA_MIN: live yfinance BTC-USD only goes back
+    # to ~2014-09-17, so hardcoding 2012-01-01 would set value < min_value.
+    import datetime as _dt
+    _start_preferred = _dt.date(2012, 1, 1)
+    _start_default = max(_start_preferred, DATA_MIN)  # safe clamp
     with col_d1:
-        start_date = st.date_input("From", value=pd.Timestamp("2012-01-01").date(),
+        start_date = st.date_input("From", value=_start_default,
                                    min_value=DATA_MIN, max_value=DATA_MAX)
     with col_d2:
         end_date = st.date_input("To", value=DATA_MAX,
