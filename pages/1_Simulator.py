@@ -72,7 +72,7 @@ if "Live Data" in data_source:
             "<div style='font-size:0.8rem; background:rgba(10,124,110,0.1); border-left:3px solid #0a7c6e; padding:10px; margin-top:10px; line-height:1.5;'>"
             "<b>ℹ️ Live Data Context:</b><br/>"
             "Fetches current BTC prices from <b>Yahoo Finance</b> and computes Trolololo "
-            "using the standard logarithmic regression formula.<br/><br/>"
+            "using the professor's <b>Dynamic Channel Normalization</b> formula.<br/><br/>"
             "No dependency on the CBBI API — signal values are deterministic and "
             "consistent regardless of Colin's formula updates."
             "</div>",
@@ -94,7 +94,7 @@ DATA_MAX = df_full.index.max().to_pydatetime().date()
 st.markdown("## ⚡ Strategy Simulator")
 st.markdown(
     "<div style='opacity:0.5; font-size:0.88rem; margin-bottom:1.5rem;'>"
-    "Run live backtests with any custom parameters · Signal: <b>Trolololo</b> (Log Regression) · "
+    "Run live backtests with any custom parameters · Signal: <b>Trolololo</b> (Dynamic Channel Normalization) · "
     "Execution: T+1 open price · Fee adjustable"
     "</div>",
     unsafe_allow_html=True,

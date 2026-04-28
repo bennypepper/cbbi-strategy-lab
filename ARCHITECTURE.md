@@ -6,7 +6,7 @@
 **Author:** Solo Developer  
 **Status:** Production (Deployed)  
 **Repo:** `cbbi-strategy-lab`  
-**Last Updated:** 2026-04-27 — Trolololo decoupled from CBBI API; live data via yfinance added (see §2.1, §2.5)
+**Last Updated:** 2026-04-28 — Trolololo decoupled from CBBI API via Dynamic Channel Normalization; live data via yfinance added (see §2.1, §2.5)
 
 ---
 
@@ -18,10 +18,10 @@ This web application is the public-facing deliverable of Phase 4 of the academic
 **"Optimizing Threshold Parameters and Asset Allocation Based on CBBI Indicators to Maximize Bitcoin Portfolio Performance"** (PKL Research, 2026).
 
 Phases 1–3 of the research have been completed in a separate private repository (`the core research repository`):
-- **Phase 1:** Data pipeline — master dataset built from CBBI official XLSX (8 indicators + composite score) + yfinance BTC open prices. **Trolololo is computed independently** via `src/data/trolololo.py` (logarithmic regression on BTC-USD close prices), eliminating *Index Revision Bias*.
+- **Phase 1:** Data pipeline — master dataset built from CBBI official XLSX (8 indicators + composite score) + yfinance BTC open prices. **Trolololo is computed independently** via `src/data/trolololo.py` (Dynamic Channel Normalization on BTC-USD close prices), eliminating *Index Revision Bias*.
 - **Phase 2:** Indicator selection — Trolololo (Logarithmic Regression / Rainbow Chart) identified as the most statistically significant signal indicator via Spearman correlation analysis
 - **Phase 3:** Optimization engine — Grid Search across ~1.29M parameter combinations, two scenarios
-- **Phase 4 Extension (2026-04-27):** Live data mode added — app fetches current BTC prices from Yahoo Finance and computes Trolololo independently in real time, no CBBI API dependency.
+- **Phase 4 Extension (2026-04-28):** Live data mode added — app fetches current BTC prices from Yahoo Finance and computes Trolololo independently in real time, no CBBI API dependency.
 
 This repository (`cbbi-strategy-lab`) contains **only the web application**. The research pipeline code lives in the core research repository and is not reproduced here. Only its outputs (processed data + results JSON) are imported.
 
@@ -88,22 +88,13 @@ cbbi-strategy-lab/
 
 ### 2.3 Trolololo Independent Computation (`core/trolololo.py`)
 
-As of **2026-04-27**, the `trolololo` column is **not read from the CBBI XLSX**. It is computed
-directly from BTC-USD closing prices using a logarithmic power-law regression:
+As of **2026-04-28**, the `trolololo` column is **not read from the CBBI XLSX**. It is computed
+directly from BTC-USD closing prices using the professor's **Dynamic Channel Normalization** formula:
 
-```
-log10(price) = slope × log10(days_since_genesis) + intercept
-residual     = log10(actual_price) - log10(fitted_price)
-normalized   = clip((residual - BAND_MIN) / (BAND_MAX - BAND_MIN) × 100, 0, 100)
-```
+- It uses two power-law base channels (`top_base = ln(10)×(2.900×ln(d+1400)−19.463)`, `bottom_base = ln(10)×(2.788×ln(d+1200)−19.463)`) where d = days since 2012-01-01.
+- Fits linear regressions on residuals at confirmed historical cycle peaks and troughs to produce an adaptive channel.
+- The index is normalized as `(price_log - channel_bottom) / (channel_top - channel_bottom) × 100` and clipped to [0, 100].
 
-| Constant | Value | Purpose |
-|---|---|---|
-| `GENESIS_DATE` | 2009-01-09 | First Bitcoin transaction date |
-| `BAND_MIN` | −0.6353 | Lower fixed band (→ score 0) |
-| `BAND_MAX` | 0.8647 | Upper fixed band (→ score 100) |
-
-Calibrated to match the professor's reference value of **~26.7** as of 2026-04-27.  
 This eliminates *Index Revision Bias* — the risk that retroactive CBBI formula updates silently shift historical signal values.
 
 ### 2.4 Backtest Engine Design

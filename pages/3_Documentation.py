@@ -50,7 +50,7 @@ Data source: [cbbi.info](https://cbbi.info) · Dataset: 2012-01-01 to 2026-03-15
 
 | Indicator | Internal Name | Description |
 |---|---|---|
-| **Trolololo** ⭐ | `trolololo` | Logarithmic Regression Band (Rainbow Chart) — **primary signal used in this app** |
+| **Trolololo** ⭐ | `trolololo` | Dynamic Channel Normalization Band — **primary signal used in this app** |
 | Pi Cycle Top | `pi_cycle` | Identifies cycle tops using moving average crossovers |
 | RUPL | `rupl` | Relative Unrealized Profit / Loss across all wallets |
 | RHODL Ratio | `rhodl_ratio` | Compares realized value of coins from different age bands |
@@ -67,7 +67,7 @@ Data source: [cbbi.info](https://cbbi.info) · Dataset: 2012-01-01 to 2026-03-15
 Phase 2 of the underlying research performed **Spearman correlation analysis** across all 9 indicators
 against forward Bitcoin returns at 7, 14, 30, 60, and 90-day lag windows on In-Sample data (2012–2020).
 
-The analysis found that **Trolololo (Logarithmic Regression)** consistently showed the highest
+The analysis found that **Trolololo (Dynamic Channel Normalization)** consistently showed the highest
 composite score — combining both correlation strength and statistical significance (p < 0.05) —
 across multiple lag windows. This makes it the most reliable indicator for threshold-based signal generation
 within this research framework.
@@ -192,7 +192,7 @@ This application presents results from a 4-phase academic research project.
 #### Phase 1 — Data Pipeline
 - **Source 1:** CBBI official dataset (XLSX from cbbi.info) — 8 on-chain indicators + composite score
 - **Source 2:** BTC-USD daily prices from yfinance (`BTC-USD`) — used for `btc_open` (T+1 execution) and `btc_close`
-- **Trolololo *(Updated 2026-04-27)*:** `trolololo` is **not** sourced from the CBBI XLSX. It is computed independently from `btc_close` using a logarithmic regression power-law model (`core/trolololo.py`). This eliminates *Index Revision Bias* — the risk that retroactive CBBI formula updates silently shift historical signal values. Calibrated to match professor's reference value of ~26.7 as of 2026-04-27.
+- **Trolololo *(Updated 2026-04-28)*:** `trolololo` is **not** sourced from the CBBI XLSX. It is computed independently from `btc_close` using the professor's **Dynamic Channel Normalization** formula (`core/trolololo.py`). This uses two power-law base channels and adaptive linear drift regression at cycle peaks/troughs. This eliminates *Index Revision Bias* — the risk that retroactive CBBI formula updates silently shift historical signal values.
 - Preprocessing: string parsing → float64, forward fill ≤ 7 days, date alignment
 - Static dataset snapshot: 2012-01-01 to 2026-03-15 (5,161 trading days)
 - Validation: `validate_no_lookahead()` confirmed no backward fill was applied
@@ -299,7 +299,7 @@ The CBBI Confidence Score and its sub-indicators are periodically revised retroa
 | [CBBI Official (cbbi.info)](https://cbbi.info) | 8 on-chain indicators + Confidence Score (from XLSX) | 2011-06-27 – 2026-03-15 |
 | Yahoo Finance (via yfinance) | BTC-USD daily Close & Open prices + independent Trolololo computation | 2012-01-01 – 2026-03-15 (static snapshot); live mode extends to present |
 
-> **Note on Trolololo:** The Trolololo (Logarithmic Regression) indicator is **computed independently** from BTC-USD close prices — it is not read from the CBBI XLSX. This eliminates *Index Revision Bias* caused by retroactive formula updates on cbbi.info.
+> **Note on Trolololo:** The Trolololo (Dynamic Channel Normalization) indicator is **computed independently** from BTC-USD close prices — it is not read from the CBBI XLSX. This eliminates *Index Revision Bias* caused by retroactive formula updates on cbbi.info.
 
 This application is not affiliated with, endorsed by, or connected to CBBI, cbbi.info,
 Cole Garner, Yahoo Finance, or any cryptocurrency exchange.
