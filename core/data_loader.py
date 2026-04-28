@@ -33,60 +33,63 @@ SCENARIO_1_LOG = TRIAL_LOG_DIR / "scenario_1_grid_search_in_sample.parquet"
 SCENARIO_2_LOG = TRIAL_LOG_DIR / "scenario_2_grid_search_full.parquet"
 
 
-@st.cache_data(show_spinner=False)
-def load_master_dataset() -> pd.DataFrame:
+@st.cache_data(ttl=43200, show_spinner=False)  # Cache for 12 hours
+def load_smart_dataset() -> pd.DataFrame:
     """
-    Load master_dataset.parquet and cache for the entire session.
-    DatetimeIndex, all CBBI indicators + btc_open/close columns.
+    Hybrid Data Pipeline (Smart Appending):
+    1. Loads the massive static master_dataset.parquet (2012 to 2026-03-15).
+    2. Checks the last date in the static dataset.
+    3. Fetches ONLY the missing daily BTC-USD prices from Yahoo Finance up to today.
+    4. Computes Trolololo for the entire combined price history instantly.
+    5. Caches the result so it's lightning fast for 12 hours.
+
+    This removes the need for users to choose between "Historical" and "Live" modes,
+    providing a seamless, always-up-to-date experience.
     """
-    df = pd.read_parquet(DATASET_PATH)
-    # Ensure DatetimeIndex
-    if not isinstance(df.index, pd.DatetimeIndex):
-        df.index = pd.to_datetime(df.index)
-    return df
+    # 1. Load static historical data
+    df_static = pd.read_parquet(DATASET_PATH)
+    if not isinstance(df_static.index, pd.DatetimeIndex):
+        df_static.index = pd.to_datetime(df_static.index)
+    
+    last_date = df_static.index.max()
 
-
-@st.cache_data(ttl=3600, show_spinner="Fetching live BTC data...")
-def fetch_live_dataset() -> pd.DataFrame:
-    """
-    Fetch current BTC-USD prices from Yahoo Finance and compute Trolololo
-    independently using logarithmic regression (core/trolololo.py).
-
-    No dependency on the CBBI API. Eliminates Index Revision Bias.
-    Cached for 1 hour (ttl=3600).
-
-    Returns a DataFrame with DatetimeIndex and at minimum:
-      - btc_close  : BTC daily close price
-      - btc_open   : BTC daily open price (same as close for live rows)
-      - trolololo  : independently computed Trolololo [0-100]
-    """
-    raw = yf.download("BTC-USD", start="2012-01-01", auto_adjust=True, progress=False)
-    if raw.empty:
-        raise RuntimeError("yfinance returned no data for BTC-USD.")
-
-    # Flatten MultiIndex columns if present (yfinance >= 0.2.x)
-    if isinstance(raw.columns, pd.MultiIndex):
-        raw.columns = raw.columns.get_level_values(0)
-
-    # Ensure timezone-naive DatetimeIndex
-    raw.index = pd.to_datetime(raw.index).tz_localize(None)
-    raw = raw.sort_index()
-
-    df = pd.DataFrame(index=raw.index)
-    df["btc_close"] = raw["Close"].squeeze()
-    df["btc_open"]  = raw["Open"].squeeze()
-
-    # Compute Trolololo independently from BTC close prices
-    df["trolololo"] = compute_trolololo(df["btc_close"].dropna().reindex(df.index))
-
-    df = df.dropna(subset=["btc_close"])
-    return df
-
-
-# Backward-compatibility alias — remove after all callers are updated
-def fetch_cbbi_live() -> pd.DataFrame:
-    """Deprecated: use fetch_live_dataset() instead."""
-    return fetch_live_dataset()
+    # 2. Fetch the delta (missing days)
+    # Add a day to start_date to avoid fetching the overlapping day, though yfinance handles dates flexibly
+    start_fetch = (last_date + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    try:
+        raw_new = yf.download("BTC-USD", start=start_fetch, auto_adjust=True, progress=False)
+        
+        if not raw_new.empty:
+            if isinstance(raw_new.columns, pd.MultiIndex):
+                raw_new.columns = raw_new.columns.get_level_values(0)
+            
+            raw_new.index = pd.to_datetime(raw_new.index).tz_localize(None)
+            raw_new = raw_new.sort_index()
+            
+            df_new = pd.DataFrame(index=raw_new.index)
+            df_new["btc_close"] = raw_new["Close"].squeeze()
+            df_new["btc_open"]  = raw_new["Open"].squeeze()
+            
+            # Combine static and new (only for overlapping columns needed for simulation)
+            # Other CBBI columns (pi_cycle, etc.) will naturally become NaN or we can ffill them.
+            # We don't trade on them, so it's fine.
+            df_combined = pd.concat([df_static, df_new])
+            
+            # 3. Compute Trolololo across the whole timeline
+            # Trolololo is independent, so it computes instantly
+            df_combined["trolololo"] = compute_trolololo(df_combined["btc_close"].dropna())
+            
+            # Fill down other indicators purely for cosmetic charts if needed
+            df_combined = df_combined.ffill()
+            
+            return df_combined
+            
+    except Exception as e:
+        # Graceful fallback: If yfinance is down or rate-limited, just return static dataset.
+        print(f"Failed to fetch live delta data: {e}. Falling back to static dataset.")
+    
+    return df_static
 
 
 

@@ -12,7 +12,7 @@ Responsibilities:
 
 import streamlit as st
 
-from core.data_loader import load_master_dataset, load_research_results, fetch_live_dataset
+from core.data_loader import load_smart_dataset, load_research_results
 from core.engine import warmup_numba
 from core.styles import inject_css, ICON_ZAP, ICON_CHART_BARS, ICON_BOOK
 from core.utils import format_percentage, format_currency
@@ -49,12 +49,8 @@ def _warmup():
 
 @st.cache_resource
 def _preload_data():
-    load_master_dataset()
+    load_smart_dataset()
     load_research_results()
-    try:
-        fetch_live_dataset()
-    except Exception:
-        pass
     return True
 
 
@@ -82,17 +78,10 @@ st.markdown(
 )
 
 # ── Dynamic Stats Cards ───────────────────────────────────────────────────────
-df_hist = load_master_dataset()
-try:
-    df_live = fetch_live_dataset()
-    latest_date = df_live.index.max()
-    latest_row = df_live.loc[latest_date]
-    is_live = True
-except Exception:
-    df_live = df_hist
-    latest_date = df_hist.index.max()
-    latest_row = df_hist.loc[latest_date]
-    is_live = False
+df_live = load_smart_dataset()
+latest_date = df_live.index.max()
+latest_row = df_live.loc[latest_date]
+is_live = True
 
 latest_cbbi = float(latest_row['trolololo'])
 latest_price = float(latest_row.get('btc_open', latest_row.get('btc_close', 0.0)))

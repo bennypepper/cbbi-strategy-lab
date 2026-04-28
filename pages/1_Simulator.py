@@ -8,7 +8,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-from core.data_loader import load_master_dataset, fetch_live_dataset, get_dataset_slice, load_research_results
+from core.data_loader import load_smart_dataset, get_dataset_slice, load_research_results
 from core.engine import run_backtest_full
 from core.charts import build_equity_chart, build_cbbi_chart  # both now Plotly
 from core.styles import inject_css
@@ -56,33 +56,7 @@ LIVE_SCENARIOS = {
     "🌐 Live Optimized (Max Sharpe)": "max_sharpe",
 }
 
-# ── Load data + research results ─────────────────────────────────────────────
-st.sidebar.markdown("### 🔌 API Settings")
-data_source = st.sidebar.radio(
-    "Data Source",
-    options=["🗄️ Historical CSV (Default)", "🟢 Live Data (yfinance)"],
-    index=0,
-    help="Switch between local snapshot and real-time live data fetched from Yahoo Finance with independently computed Trolololo."
-)
-
-if "Live Data" in data_source:
-    try:
-        df_full = fetch_live_dataset()
-        st.sidebar.markdown(
-            "<div style='font-size:0.8rem; background:rgba(10,124,110,0.1); border-left:3px solid #0a7c6e; padding:10px; margin-top:10px; line-height:1.5;'>"
-            "<b>ℹ️ Live Data Context:</b><br/>"
-            "Fetches current BTC prices from <b>Yahoo Finance</b> and computes Trolololo "
-            "using the professor's <b>Dynamic Channel Normalization</b> formula.<br/><br/>"
-            "No dependency on the CBBI API — signal values are deterministic and "
-            "consistent regardless of Colin's formula updates."
-            "</div>",
-            unsafe_allow_html=True
-        )
-    except Exception as e:
-        st.sidebar.error(f"Failed to fetch live data: {e}")
-        df_full = load_master_dataset()
-else:
-    df_full = load_master_dataset()
+df_full = load_smart_dataset()
 
 research = load_research_results()
 # Use .to_pydatetime().date() to guarantee pure Python datetime.date objects

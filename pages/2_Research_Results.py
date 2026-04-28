@@ -9,7 +9,7 @@ import streamlit as st
 import pandas as pd
 
 from core.data_loader import (
-    load_master_dataset,
+    load_smart_dataset,
     load_research_results,
     load_scenario1_log,
     load_scenario2_log,
@@ -29,7 +29,7 @@ inject_css()
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 results = load_research_results()
-df_full = load_master_dataset()
+df_full = load_smart_dataset()
 
 s1 = results["scenario_1"]
 s2 = results["scenario_2"]
@@ -55,7 +55,7 @@ with st.expander("📖 Understanding the Two Scenarios", expanded=False):
 - Optimal parameters are then tested on **2021–2026** data (Out-of-Sample)
 - No lookahead bias — OOS data was never seen during optimization
 - Purpose: prove strategy robustness and generalizability
-- Signal: Trolololo (Logarithmic Regression)
+- Signal: Trolololo (Dynamic Channel Normalization)
         """)
     with c2:
         st.markdown("""
