@@ -83,16 +83,15 @@ col_input, col_results = st.columns([2, 3], gap="large")
 with col_input:
     st.markdown("#### Configuration")
 
-    live_params = load_live_params() if "Live Data" in data_source else None
-    
-    if "Live Data" in data_source:
-        if live_params and live_params.get("status") == "success":
-            available_scenarios = list(LIVE_SCENARIOS.keys()) + [CUSTOM_LABEL]
-        else:
-            available_scenarios = [CUSTOM_LABEL]
-            st.warning("⚠️ No Live Optimized parameters found. Run the Optimizer page first to unlock presets, or use Custom.")
+    live_params = load_live_params()
+    available_scenarios = HISTORICAL_SCENARIO_KEYS.copy()
+
+    if live_params and live_params.get("status") == "success":
+        available_scenarios.extend(list(LIVE_SCENARIOS.keys()))
     else:
-        available_scenarios = HISTORICAL_SCENARIO_KEYS + [CUSTOM_LABEL]
+        st.info("💡 Tip: Run the Optimizer page to unlock Live Optimized presets.")
+
+    available_scenarios.append(CUSTOM_LABEL)
 
     # Scenario selector — mirrors CLI options 1 / 2 / 3
     scenario_label = st.selectbox(
