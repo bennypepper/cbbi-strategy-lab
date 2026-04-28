@@ -30,7 +30,7 @@ import streamlit as st
 import pandas as pd
 
 from core.styles import inject_css
-from core.data_loader import fetch_live_dataset
+from core.data_loader import load_smart_dataset
 from core.optimizer import (
     run_live_optimization,
     load_live_params,
@@ -233,7 +233,7 @@ if run_btn:
     try:
         # Step 1: Fetch live data
         _progress(0.01, "Fetching live BTC price data from Yahoo Finance...")
-        df_live = fetch_live_dataset()
+        df_live = load_smart_dataset()
 
         # Step 2: Warm up Numba (first run only — compiles JIT kernels)
         _progress(0.04, "Warming up Numba JIT compiler (first run only)…")

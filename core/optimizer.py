@@ -38,10 +38,10 @@ LIVE_PARAMS_PATH = _ROOT / "data" / "live_optimal_params.json"
 
 
 # ── Grid search parameter space (mirrors the core research repository methodology) ────────────────
-BUY_THRESHOLDS  = list(range(1, 50, 2))     # 1, 3, 5 … 49  (25 values)
-SELL_THRESHOLDS = list(range(50, 101, 2))   # 50, 52 … 100  (26 values)
-ALLOC_STEPS     = [0.01, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]  # 7 values each
-# Total combinations: 25 × 26 × 7 × 7 = 31,850 — fast on Numba
+BUY_THRESHOLDS  = list(range(1, 46, 1))     # 1, 2 … 45  (45 values)
+SELL_THRESHOLDS = list(range(55, 101, 1))   # 55, 56 … 100  (46 values)
+ALLOC_STEPS     = [x / 100.0 for x in range(1, 26, 1)]  # 1% to 25% (25 values)
+# Total combinations: 45 × 46 × 25 × 25 = 1,293,750 — exactly matches research pipeline
 
 
 @dataclass
