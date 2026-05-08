@@ -89,7 +89,7 @@ cbbi-strategy-lab/
 ### 2.3 Trolololo Independent Computation (`core/trolololo.py`)
 
 As of **2026-04-28**, the `trolololo` column is **not read from the CBBI XLSX**. It is computed
-directly from BTC-USD closing prices using the professor's **Dynamic Channel Normalization** formula:
+directly from BTC-USD closing prices using the **Dynamic Channel Normalization** formula:
 
 - It uses two power-law base channels (`top_base = ln(10)×(2.900×ln(d+1400)−19.463)`, `bottom_base = ln(10)×(2.788×ln(d+1200)−19.463)`) where d = days since 2012-01-01.
 - Fits linear regressions on residuals at confirmed historical cycle peaks and troughs to produce an adaptive channel.

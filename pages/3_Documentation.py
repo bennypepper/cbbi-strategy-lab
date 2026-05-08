@@ -32,8 +32,8 @@ with tab1:
     st.markdown("""
 ### What is CBBI?
 
-The **Crypto Bitcoin Bull/Bear Index (CBBI)** is a composite on-chain data indicator created by
-Cole Garner that attempts to identify where Bitcoin is within its market cycle.
+The **Crypto Bitcoin Bull/Bear Index (CBBI)** is a composite on-chain data indicator that attempts
+to identify where Bitcoin is within its market cycle.
 
 Rather than relying on price alone, CBBI aggregates 9 independent on-chain metrics that
 historically correlate with Bitcoin's cyclical peaks and troughs. Each metric is normalized
@@ -192,7 +192,7 @@ This application presents results from a 4-phase academic research project.
 #### Phase 1 — Data Pipeline
 - **Source 1:** CBBI official dataset (XLSX from cbbi.info) — 8 on-chain indicators + composite score
 - **Source 2:** BTC-USD daily prices from yfinance (`BTC-USD`) — used for `btc_open` (T+1 execution) and `btc_close`
-- **Trolololo *(Updated 2026-04-28)*:** `trolololo` is **not** sourced from the CBBI XLSX. It is computed independently from `btc_close` using the professor's **Dynamic Channel Normalization** formula (`core/trolololo.py`). This uses two power-law base channels and adaptive linear drift regression at cycle peaks/troughs. This eliminates *Index Revision Bias* — the risk that retroactive CBBI formula updates silently shift historical signal values.
+- **Trolololo *(Updated 2026-04-28)*:** `trolololo` is **not** sourced from the CBBI XLSX. It is computed independently from `btc_close` using **Dynamic Channel Normalization** formula (`core/trolololo.py`). This uses two power-law base channels and adaptive linear drift regression at cycle peaks/troughs. This eliminates *Index Revision Bias* — the risk that retroactive CBBI formula updates silently shift historical signal values.
 - Preprocessing: string parsing → float64, forward fill ≤ 7 days, date alignment
 - Static dataset snapshot: 2012-01-01 to 2026-03-15 (5,161 trading days)
 - Validation: `validate_no_lookahead()` confirmed no backward fill was applied
@@ -288,7 +288,7 @@ may still select parameters that are overfit to historical noise patterns.
 The OOS forward test provides evidence of generalizability, but is not proof of robustness.
 
 **6. Index Revision Bias**  
-The CBBI Confidence Score and its sub-indicators are periodically revised retroactively by the author when the formula changes (e.g., removal of Stock-to-Flow). Empirical evidence: the same historical date (2021-01-01) showed a **+14.48 point drift** between the research snapshot (63.65) and the live API value (78.13) as of April 17, 2026. The Trolololo signal in this app is computed independently from BTC-USD prices to eliminate this bias for that indicator. However, the remaining 8 indicators loaded from the CBBI XLSX snapshot may still be subject to future drift if the CBBI formula is updated again.
+The CBBI Confidence Score and its sub-indicators are periodically revised retroactively by the index provider when the formula changes (e.g., removal of Stock-to-Flow). Empirical evidence: the same historical date (2021-01-01) showed a **+14.48 point drift** between the research snapshot (63.65) and the live API value (78.13) as of April 17, 2026. The Trolololo signal in this app is computed independently from BTC-USD prices to eliminate this bias for that indicator. However, the remaining 8 indicators loaded from the CBBI XLSX snapshot may still be subject to future drift if the CBBI formula is updated again.
 
 ---
 

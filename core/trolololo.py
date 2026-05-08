@@ -9,7 +9,7 @@ Trolololo models Bitcoin's long-term price growth as a power law over time.
 It answers: "Is Bitcoin currently expensive or cheap relative to its historical
 growth curve?" — expressed as a 0-100 score.
 
-Method: Dynamic Channel Normalization (professor's formula, confirmed 2026-04-28)
+Method: Dynamic Channel Normalization (original formula, confirmed 2026-04-28)
 ----------------------------------------------------------------------------------
 The indicator uses two separate power-law base channels (top and bottom) derived
 from Bitcoin's known cycle structure, then fits linear regressions on the residuals
@@ -55,10 +55,10 @@ from scipy.signal import argrelextrema
 
 # ── Origin date ───────────────────────────────────────────────────────────────
 
-# Day-counting origin. Professor's formula uses 2012-01-01 as reference.
+# Day-counting origin. The formula uses 2012-01-01 as reference.
 ORIGIN_DATE = pd.Timestamp("2012-01-01")
 
-# ── Base channel constants (professor's formula) ──────────────────────────────
+# ── Base channel constants (original formula) ─────────────────────────────────
 
 # top_base    = ln(10) * (TOP_SLOPE    * ln(d + TOP_OFFSET)    - INTERCEPT)
 # bottom_base = ln(10) * (BOTTOM_SLOPE * ln(d + BOTTOM_OFFSET) - INTERCEPT)
@@ -69,7 +69,7 @@ BOTTOM_OFFSET:  int   = 1200
 INTERCEPT:      float = 19.463
 
 # Correction factor applied to the residual at the FIRST confirmed high mark.
-# Source: professor's implementation (manual calibration for early 2013 bubble).
+# Source: original implementation (manual calibration for early 2013 bubble).
 FIRST_HIGH_CORRECTION: float = 0.6
 
 # ── Confirmed historical BTC cycle marks (ground truth, pre-2026) ─────────────
@@ -182,7 +182,7 @@ def compute_trolololo(
     """
     Compute the Trolololo indicator from BTC daily closing prices.
 
-    Uses professor's Dynamic Channel Normalization formula (confirmed 2026-04-28):
+    Uses the Dynamic Channel Normalization formula (confirmed 2026-04-28):
     - Two power-law base channels (top and bottom) in natural-log space
     - Linear drift regression fit at confirmed cycle peaks and troughs
     - Adaptive channel = base + drift
@@ -222,7 +222,7 @@ def compute_trolololo(
     price_log = np.full(n, np.nan)
     price_log[valid] = np.log(prices[valid])
 
-    # ── Base channels (professor's constants, natural-log space) ─────────────
+    # ── Base channels (original constants, natural-log space) ────────────────
     LN10 = np.log(10.0)   # ≈ 2.302585
 
     # Avoid log(0): d_raw + offset is always >> 1 for dates after 2012
@@ -266,7 +266,7 @@ def compute_trolololo(
 
     # Top drift: fit on residuals at confirmed highs
     hi_y = res_top[hi_idx].copy()
-    hi_y[0] *= FIRST_HIGH_CORRECTION   # professor's manual correction on first high
+    hi_y[0] *= FIRST_HIGH_CORRECTION   # original manual correction on first high
 
     slope_top, intercept_top, _, _, _ = stats.linregress(hi_idx.astype(float), hi_y)
     top_drift = slope_top * all_pos + intercept_top
